@@ -114,12 +114,19 @@ plt.show()
 
 ## Matplotlib Question 4
 plt.figure(4)
-plt.subplot(x,y)
-plt.subplot(subjects,scores)
+plt.subplot(1,2,1)
+plt.plot(x,y)
+plt.title("Squares")
+plt.xlabel("X")
+plt.ylabel("Y")
+
+plt.subplot(1,2,2)
+plt.bar(subjects,scores)
+plt.title("Subject Scores")
+plt.xlabel("Subjects")
+plt.ylabel("Scores")
 plt.tight_layout()
 plt.show()
-
-##### COME BACK TO THIS ########
 
 ## Descriptive Stats Question 1
 data = [12, 15, 14, 10, 18, 22, 13, 16, 14, 15]
@@ -153,25 +160,42 @@ normal_data = np.random.normal(50, 5, 200)
 skewed_data = np.random.exponential(10, 200)
 
 plt.figure(7)
+plt.subplot(1,2,1)
 plt.boxplot(normal_data, label="Normal")
+plt.title("Normal Distribution")
+
+plt.subplot(1,2,2)
 plt.boxplot(skewed_data, label = "Exponential")
-plt.title("Distribution Comparison")
+plt.title("Exponential Distribution")
+plt.suptitle("Distribution Comparison")
+plt.tight_layout()
 plt.show()
 
-## ADD COMMENTS
+# The normal distribution is more even, with a median 
+# that is closer to the middle. The skewed distribution 
+# has more outliars and the median is very low compared 
+# to the range. For normal distribution the mean and 
+# median are probably similar. But in the skewed
+# distribution the mean is almost certainly much higher, 
+# meaning there is probably a right skew.
 
 ## Descriptive Stats Question 5
 data1 = [10, 12, 12, 16, 18]
 print(f"Mean: {np.mean(data1)}")
 print(f"Median:{np.median(data1)}")
-print(f"Mode: {np.mode(data1)}")
+print(f"Mode: {stats.mode(data1)[0]}")
 
 data2 = [10, 12, 12, 16, 150]
 print(f"Mean: {np.mean(data2)}")
 print(f"Median:{np.median(data2)}")
-print(f"Mode: {np.mode(data2)}")
+print(f"Mode: {stats.mode(data2)[0]}")
 
-# ADD COMMENT
+# The median remains the same because there are five 
+# numbers in each set and 12 remains in the middle 
+# regardless of how the other numbers change. Meanwhile, 
+# the mean greatly increases for data2 becuase it has a 
+# wider range, in which the highest value is significantly 
+# more than in data1.
 
 # Hypothesis Question 1
 group_a = [72, 68, 75, 70, 69, 73, 71, 74]
@@ -207,7 +231,11 @@ t_stat, p_val = stats.ttest_ind(group_a, group_b, alternative = "less")
 print(f"P Value: {p_val}")
 
 # Hypothesis Question 6
-#ADD COMMENT
+print(
+    "The P Value from Q1 is significantly lower than the threshhold for .05," \
+    "therefor the results are significant. This can be seen through group b" \
+    "being entirely larger than group a. The change is almost certainly NOT" \
+    "due to chance.")
 
 ## Correlation Question 1
 x = [1, 2, 3, 4, 5]
@@ -215,7 +243,9 @@ y = [2, 4, 6, 8, 10]
 
 matrix = np.corrcoef(x, y)
 print(matrix)
-## ADD COMMENT
+print(matrix[0,1])
+# The correlation matrix is entirely ones because where x and y are compared there 
+# is a positive correlation given that y is consistantly double x.
 
 ## Correlation Question 2
 x = [1,  2,  3,  4,  5,  6,  7,  8,  9, 10]

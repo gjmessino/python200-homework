@@ -30,4 +30,15 @@ if __name__ == "__main__":
     print(f"Keys: {my_dict.keys()}")
     print(f"Values: {my_dict.values()}")
 
-## ADD COMMENT
+## Question 1
+# Prefect might be too much overhead because of the simplicity 
+# of this pipeline. Prefect is intended for larger data sets 
+# and simplifying workflows. This workflow is already simply. 
+# It would be easier to have not added the decorators in the 
+# first place and just called pipeline_flow late in the code.
+
+## Question 1
+# Prefect would be useful when working with a larger data sets, 
+# especially ones that may need more cleaning. It would be helpful 
+# in situation where more tasks are required even if the logic 
+# stays simple.
