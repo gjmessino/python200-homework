@@ -77,40 +77,111 @@ def make_visuals(df):
 @task
 def hypo_testing(df):
     logger = get_run_logger()
-    df_2019 = df.loc[df['year'] = 2019, ['Country', 'Happiness score']]
-    df_2020 = df.loc['year' = 2020].dropna()
-    before = pd.Series(df_2019, index='Country')
-    after = pd.Series(df_2020, index='Country')
-    tstat,pval = stats.ttest_rel(before, after)
-    logger.info(df_2019['Country'])
-    logger.info(f"Stats: {tstat}")
-    logger.info(f"P Values: {pval}")
-    logger.info(f"2019 Mean: {before.mean()}")
-    logger.info(f"2020 Mean: {after.mean()}")
-
-    ## ADD COMMENT
+    
+    df_2019 = df[df['year'] == 2019][['Country', 'Happiness score']]
+    df_2020 = df[df['year'] == 2020][['Country', 'Happiness score']]
+    aligned_df = df_2019.merge(df_2020, on='Country', suffixes=('_2019', '_2020'))
+    
+    before = aligned_df['Happiness score_2019']
+    after = aligned_df['Happiness score_2020']
+    
+    tstat, pval = stats.ttest_rel(before, after, nan_policy='omit')
+    mean_2019 = before.mean()
+    mean_2020 = after.mean()
+    
+    logger.info(f"T Stat: {tstat}")
+    logger.info(f"P Value: {pval}")
+    logger.info(f"2019 Mean: {mean_2019}")
+    logger.info(f"2020 Mean: {mean_2020}")
     
     alpha = 0.05
     if pval < alpha:
-        logger.info("Significant")
+        direction = "decreased" if mean_2020 < mean_2019 else "increased"
+        logger.info(f"Significant: Global happiness scores {direction} between 2019 and 2020.")
     else:
-        logger.info("Insignificant")
-    ## ADD COMMENT
-    ## ADD SECOND TEST
+        logger.info("Insignificant: No statistically significant change in happiness scores was detected.")
+    # Because the samples are perfectly paired/aligned by country, 
+    # a paired t-test(ttest_rel) is used to check if the mean difference 
+    # deviates significantly from zero.
+    
+    high_region = df[df['Regional indicator'] == 'Western Europe']['Happiness score']
+    low_region = df[df['Regional indicator'] == 'Sub-Saharan Africa']['Happiness score']
+
+    tstat, pval2 = stats.ttest_ind(high_region, low_region, nan_policy='omit')
+
+    logger.info(f"Regional Test (Western Europe vs Sub-Saharan Africa):")
+    logger.info(f"T Stat: {tstat}, P Value: {pval2}")
+    # The second test compares the historical differences between 
+    # Western Europe and Sub-Saharan Africa across all years using 
+    # an independent samples t-test to confirm if the regional gap 
+    # observed in descriptive stats is statistically reliable.
+    
+    return pval, mean_2019, mean_2020
 
 ## Task 5: Correlation and Multiple Comparisons
 @task
 def corr_comparison(df):
-    corr, pval = stats.pearsonr(df.select_dtypes(include='number'))
+    logger = get_run_logger()
+    
+    explanatory_vars = [
+        'GDP per capita', 'Social support', 'Healthy life expectancy', 
+        'Freedom to make life choices', 'Generosity', 'Perceptions of corruption'
+    ]
+    
+    df_clean = df.dropna(subset=['Happiness score'] + explanatory_vars)
+    
+    num_tests = len(explanatory_vars)
+    original_alpha = 0.05
+    adjusted_alpha = original_alpha / num_tests
+    
+    best_var = None
+    best_coeff = 0.0
+    
+    for var in explanatory_vars:
+        coeff, pval = stats.pearsonr(df_clean[var], df_clean['Happiness score'])       
+        if abs(coeff) > abs(best_coeff):
+            best_coeff = coeff
+            best_var = var
+            
+        sig_original = pval < original_alpha
+        sig_adjusted = pval < adjusted_alpha
+        
+        logger.info(f"Variable: {var}")
+        logger.info(f"Pearson r: {coeff}")
+        logger.info(f"P Value: {pval}")
+        logger.info(f"Significant at original alpha? {sig_original}")
+        logger.info(f"Significant after Bonferroni correction? {sig_adjusted}")
+    return best_var, best_coeff
 
 ## Task 6: Summary Report
+@task
+def summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff):
+    logger = get_run_logger()
+    
+    logger.info(f"Number of Countries: {df['Country'].nunique()}")
+    logger.info(f"Years: {df['year'].nunique() }")
+        
+    regional_means = df.groupby('Regional indicator')['Happiness score'].mean().sort_values(ascending=False)
+    logger.info(f"Top 3 happiest regions: {', '.join(regional_means.head(3).index.tolist())}")
+    logger.info(f"Bottom 3 happiest regions: {', '.join(regional_means.tail(3).index.tolist())}")
+    
+    alpha = 0.05
+    if pval < alpha:
+        direction = "decreased" if mean_2020 < mean_2019 else "increased"
+        logger.info(f"Pandemic Impact: Global happiness scores significantly {direction} (p = {pval:.4f}).")
+    else:
+        logger.info("Pandemic Impact: No statistically significant change found between 2019 and 2020.")
+        
+    logger.info(f"Strongest Predictor: '{best_var}' (r = {best_coeff}).")
+  
 @flow
 def happiness_pipeline():
     df = load_data()
     happiness_scores(df)
     make_visuals(df)
-    hypo_testing(df)
-    corr_comparison(df)
+    pval, mean_2019, mean_2020 = hypo_testing(df)
+    best_var, best_coeff = corr_comparison(df)
+    summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff)
 
 if __name__ == "__main__":
     happiness_pipeline()
