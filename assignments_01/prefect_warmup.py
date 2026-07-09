@@ -4,7 +4,8 @@ from prefect import task, flow
 
 ## Pipeline Question 2
 @task
-def create_series(arr):
+def create_series():
+    arr = np.array([12.0, 15.0, np.nan, 14.0, 10.0, np.nan, 18.0, 14.0, 16.0, 22.0, np.nan, 13.0])
     return pd.Series(arr)
 @task
 def clean_data(series):
@@ -17,18 +18,15 @@ def summarize_data(series):
                'std': series.std()}
     return my_dict
 @flow
-def pipeline_flow(arr):
-    series = create_series(arr)
+def pipeline_flow():
+    series = create_series()
     clean = clean_data(series)
     my_dict = summarize_data(clean)
-    return(my_dict)
 
 arr = np.array([12.0, 15.0, np.nan, 14.0, 10.0, np.nan, 18.0, 14.0, 16.0, 22.0, np.nan, 13.0])
 
 if __name__ == "__main__":
-    my_dict = pipeline_flow(arr)
-    print(f"Keys: {my_dict.keys()}")
-    print(f"Values: {my_dict.values()}")
+    my_dict = pipeline_flow()
 
 ## Question 1
 # Prefect might be too much overhead because of the simplicity 

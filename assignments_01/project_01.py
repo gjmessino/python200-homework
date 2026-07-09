@@ -7,15 +7,14 @@ from scipy import stats
 ## Task 1: Load Multiple Years of Data
 @task(retries=3, retry_delay_seconds=2)
 def load_data():
-    base_url = "https://raw.githubusercontent.com/Code-the-Dream-School/python-200-v1/refs/heads/main/assignments/resources/happiness_project/world_happiness_20"
-    num = 15
-    results=[]
+    num = 2015
+    results = []
     for i in range(10):
-        url = f"{base_url}{int(num)}.csv"
-        df = pd.read_csv(url, sep=';', decimal=',')
-        df['year'] = 2000 + num
+        happiness_file = f'happiness_project/world_happiness_{num}.csv'
+        df = pd.read_csv(happiness_file, sep=';', decimal=',')
+        df['year'] = num
         if num == 24:
-            df.rename(columns = {"Ladder score": "Happiness score"})
+            df = df.rename(columns = {"Ladder score": "Happiness score"})
         results.append(df)
         num+=1
     df = pd.concat(results, ignore_index=True)
@@ -47,10 +46,14 @@ def make_visuals(df):
     logger.info("Histogram")
 
     plt.figure(2)
-    sns.boxplot(x = df['year'], y = df['Happiness score'])
-    plt.xlabel("Year")
-    plt.ylabel("Happiness Score")
-    plt.title("Happiness by Year")
+    for year in df['year']:
+        placement = [1,df['year'].nunique,1]
+        plt.subplot(''.join(placement))
+        sns.boxplot(x = 'year', y = df.loc(df['year'] == year, ['Happiness score']))
+        plt.xlabel("Year")
+        plt.ylabel("Happiness Score")
+        plt.title(f"Happiness by Year: {year}")
+        placement[2] += 1
     plt.savefig("assignments_01/outputs/happiness_by_year.png")
     plt.close()
     logger.info("Boxplot")
@@ -78,16 +81,12 @@ def make_visuals(df):
 def hypo_testing(df):
     logger = get_run_logger()
     
-    df_2019 = df[df['year'] == 2019][['Country', 'Happiness score']]
-    df_2020 = df[df['year'] == 2020][['Country', 'Happiness score']]
-    aligned_df = df_2019.merge(df_2020, on='Country', suffixes=('_2019', '_2020'))
-    
-    before = aligned_df['Happiness score_2019']
-    after = aligned_df['Happiness score_2020']
-    
-    tstat, pval = stats.ttest_rel(before, after, nan_policy='omit')
-    mean_2019 = before.mean()
-    mean_2020 = after.mean()
+    df_2019 = df[df['year'] == 2019]['Happiness score'].dropna()
+    df_2020 = df[df['year'] == 2020]['Happiness score'].dropna()
+
+    tstat, pval = stats.ttest_ind(df_2019, df_2020, nan_policy='omit') 
+    mean_2019 = df_2019.mean()
+    mean_2020 = df_2020.mean()
     
     logger.info(f"T Stat: {tstat}")
     logger.info(f"P Value: {pval}")
@@ -137,29 +136,37 @@ def corr_comparison(df):
     best_var = None
     best_coeff = 0.0
     
+    sig_original_vars = []
+    sig_bonferroni_vars = []
+    
     for var in explanatory_vars:
+        if var not in df.columns:
+            continue
         coeff, pval = stats.pearsonr(df_clean[var], df_clean['Happiness score'])       
+        
         if abs(coeff) > abs(best_coeff):
             best_coeff = coeff
             best_var = var
             
-        sig_original = pval < original_alpha
-        sig_adjusted = pval < adjusted_alpha
+        if pval < original_alpha:
+            sig_original_vars.append(var)
+        if pval < adjusted_alpha:
+            sig_bonferroni_vars.append(var)
         
         logger.info(f"Variable: {var}")
         logger.info(f"Pearson r: {coeff}")
         logger.info(f"P Value: {pval}")
-        logger.info(f"Significant at original alpha? {sig_original}")
-        logger.info(f"Significant after Bonferroni correction? {sig_adjusted}")
-    return best_var, best_coeff
+        
+    return best_var, best_coeff, sig_original_vars, sig_bonferroni_vars
+
 
 ## Task 6: Summary Report
 @task
-def summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff):
+def summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff, sig_original, sig_bonferroni):
     logger = get_run_logger()
     
     logger.info(f"Number of Countries: {df['Country'].nunique()}")
-    logger.info(f"Years: {df['year'].nunique() }")
+    logger.info(f"Years: {df['year'].nunique()}")
         
     regional_means = df.groupby('Regional indicator')['Happiness score'].mean().sort_values(ascending=False)
     logger.info(f"Top 3 happiest regions: {', '.join(regional_means.head(3).index.tolist())}")
@@ -172,7 +179,9 @@ def summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff):
     else:
         logger.info("Pandemic Impact: No statistically significant change found between 2019 and 2020.")
         
-    logger.info(f"Strongest Predictor: '{best_var}' (r = {best_coeff}).")
+    logger.info(f"Strongest Predictor: '{best_var}' (r = {best_coeff:.4f}).")
+    logger.info(f"Variables significant at baseline alpha (0.05): {', '.join(sig_original)}")
+    logger.info(f"Variables remaining significant after Bonferroni correction: {', '.join(sig_bonferroni)}")
   
 @flow
 def happiness_pipeline():
@@ -180,8 +189,8 @@ def happiness_pipeline():
     happiness_scores(df)
     make_visuals(df)
     pval, mean_2019, mean_2020 = hypo_testing(df)
-    best_var, best_coeff = corr_comparison(df)
-    summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff)
+    best_var, best_coeff, sig_original, sig_bonferroni = corr_comparison(df)
+    summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff, sig_original, sig_bonferroni)
 
 if __name__ == "__main__":
     happiness_pipeline()

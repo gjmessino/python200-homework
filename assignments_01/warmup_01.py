@@ -16,7 +16,7 @@ df = pd.DataFrame(data)
 
 print(f"First Three Rows: {df.head(3)}")
 print(f"Shape: {df.shape}")
-print(f"Data Types: {df.info()}")
+print(f"Data Types: {df.dtypes}")
 
 ## Pandas Question 2
 new_df = df[(df["grade"]>80) & (df["passed"] == True)]
@@ -28,7 +28,7 @@ print(df)
 
 ## Pandas Question 4
 df["name_upper"] = df["name"].str.upper()
-print(f"{df['name']}, {df['name_upper']}")
+print(df[['name', 'name_upper']])
 
 ## Pandas Question 5
 df_grouped =  df.groupby("city").agg({'grade' : 'mean'})
@@ -36,7 +36,7 @@ print(df_grouped)
 
 ## Pandas Question 6
 df['city'] = df['city'].replace('Austin', 'Houston')
-print(df['name'],df['city'])
+print(df[['name', 'city']])
 
 ## Pandas Question 7
 df = df.sort_values(by = 'grade', ascending = False)
@@ -161,11 +161,11 @@ skewed_data = np.random.exponential(10, 200)
 
 plt.figure(7)
 plt.subplot(1,2,1)
-plt.boxplot(normal_data, label="Normal")
-plt.title("Normal Distribution")
+plt.boxplot(normal_data)
+plt.suptitle("Normal Distribution")
 
 plt.subplot(1,2,2)
-plt.boxplot(skewed_data, label = "Exponential")
+plt.boxplot(skewed_data)
 plt.title("Exponential Distribution")
 plt.suptitle("Distribution Comparison")
 plt.tight_layout()
