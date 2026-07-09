@@ -5,7 +5,7 @@ from scipy import stats
 from scipy.stats import pearsonr
 import seaborn as sns
 
-## Pandas Question 1
+## Pandas Question 1 
 data = {
     "name":   ["Alice", "Bob", "Carol", "David", "Eve"],
     "grade":  [85, 72, 90, 68, 95],
