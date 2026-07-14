@@ -1,5 +1,5 @@
 import numpy as np
-import os
+
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
