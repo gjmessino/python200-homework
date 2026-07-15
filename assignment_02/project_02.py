@@ -125,8 +125,8 @@ for name, coef in zip(feature_cols, model.coef_):
 
 ## Task 6: Evaluate and Summarize
 plt.figure(2)
-plt.scatter(y,X, color = 'green')
-plt.plot(y_pred, y, color='purple')
+plt.scatter(y_train,x_train, color = 'green')
+plt.plot(y_train, y_pred, color='purple')
 plt.xlabel('Predictions')
 plt.ylabel('Real Data')
 plt.title('Predicted vs Actual (Full Model)')

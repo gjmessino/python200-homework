@@ -9,26 +9,28 @@ from sklearn.model_selection import train_test_split
 ## scikit-learn Question 1
 years  = np.array([1, 2, 3, 5, 7, 10]).reshape(-1, 1)
 salary = np.array([45000, 50000, 60000, 75000, 90000, 120000])
-new_years = np.array([8,10]).reshape(-1,1)
+new_years = np.array([4,8]).reshape(-1,1)
 
 model = LinearRegression()
 model.fit(years, salary)
 salary_predic = model.predict(new_years)
 
-print(f"Salary Predictions: {salary_predic}")
+print(f"Salary Predictions 4 Years: {salary_predic[0]}")
+print(f"Salary Predictions 8 Years: {salary_predic[1]}")
 print(f"Slope: {model.coef_[0]}")
 print(f"Intercept: {model.intercept_}")
 
 ## scikit-learn Question 2
 x = np.array([10, 20, 30, 40, 50])
 print(f"X Shape: {x.shape}")
-x = x.reshape(-1,1)
-print(f"New Shape: {x.shape}")
+y = x.reshape(-1,1)
+print(f"New Shape: {y.shape}")
 
 # scikit expects two arguments for it to work. 
 # In the case of a single array, reshaping it 
 # tells scikit learn that with this data there 
-# is only 1 column of information.
+# is only 1 column of information, because 
+# scikit learn needs rows and columns to work.
 
 ## scikit-learn Question 3
 X_clusters, _ = make_blobs(n_samples=120, centers=3, cluster_std=0.8, random_state=7)
@@ -39,7 +41,7 @@ centers = kmeans.cluster_centers_
 labels = kmeans.predict(X_clusters)
 
 plt.scatter(X_clusters[:,0], X_clusters[:,1], c=kmeans.labels_, cmap='viridis', s=60, alpha=0.7)
-plt.scatter(centers[:, 0], centers[:, 1], c='red', s=200, marker='X', label='Centers')
+plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, marker='X', label='Centers')
 plt.title('Data Clusters')
 plt.xlabel('X')
 plt.ylabel('Y')
@@ -75,10 +77,10 @@ age = age.reshape(-1,1)
 age_train, age_test, cost_train, cost_test = train_test_split(
     age, cost, test_size=0.2, random_state = 42)
 
-print(f"Age Training Shape:{age_train} ")
-print(f"Age Testing Shape:{age_test} ")
-print(f"Cost Training Shape:{cost_train} ")
-print(f"Cost Training Shape:{cost_test} ")
+print(f"Age Training Shape:{age_train.shape} ")
+print(f"Age Testing Shape:{age_test.shape} ")
+print(f"Cost Training Shape:{cost_train.shape} ")
+print(f"Cost Training Shape:{cost_test.shape} ")
 
 ## Linear Regression Question 3
 model = LinearRegression()
@@ -88,7 +90,7 @@ print(f"Slope: {model.coef_[0]}")
 print(f"Intercept: {model.intercept_}")
 
 cost_predict = model.predict(age_test)
-rmse = np.sqrt(mean_squared_error(cost_test, cost_predict))
+rmse = np.sqrt(mean_squared_error(cost_predict, cost_test))
 r2 = model.score(age_test, cost_test)
 
 print(f"Root Mean Squared Error: {rmse}")
@@ -114,7 +116,9 @@ print(f"R Squared: {r2}")
 print("age coefficient:    ", model_full.coef_[0])
 print("smoker coefficient: ", model_full.coef_[1])
 
-# ADD COMMENT LATER
+# R2 for question 4 is higher, indicating 
+# the full model is doing a much better 
+# job predicting costs. The smoker coefficient...
 
 ## Linear Regression Question 5
 plt.figure(3)
