@@ -84,7 +84,6 @@ for k in k_values:
 # rate, and the fewest overfits.
 
 # --- Classifier Evaluation Question 1 --- #
-plt.figure(1)
 cm = confusion_matrix(y_test, knn_predict)
 disp = ConfusionMatrixDisplay(
     confusion_matrix = cm, 
@@ -93,7 +92,109 @@ disp.plot()
 plt.title("KNN Confusion Matrix (Iris)")
 plt.savefig('assignment_03/outputs/knn_confusion_matrix.png')
 plt.show()
-
 # The model confuses versicolor and virginica around 20% of the time.
 
 # --- Decision Trees Question 1 --- #
+model = DecisionTreeClassifier(max_depth=3, random_state=42)
+model.fit(x_train, y_train)
+y_pred = model.predict(x_test)
+
+print(f"Accuracy Score: {accuracy_score(y_test, y_pred)}")
+print(f"Classicifation Report: {classification_report(y_test, y_pred)}")
+# KNN and Decision Tree accuracy are mostly similar. 
+# While the accuracy score is marginally higher 
+# for the Decision Tree, the classification reports 
+# are almost identical.
+
+# Scaled/unscaled data should have a lesser (or non-existent)
+#  effect on Decision Tree Data given that larger 
+# numbers will not automatically be given more weight.
+
+# --- Logistic Regression Question 1 --- #
+# c_vals = [0.01, 1, 100]
+# for c in c_vals:
+#     model = LogisticRegression(
+#         max_iter = 1000,
+#         solver = 'liblinear',
+#         C = c
+#         )
+#     model.fit(x_train_scaled, y_train)
+#     print(f"C Value: {c}")
+#     print(f"Total Coefficient: {np.abs(model.coef_).sum()}")
+
+# --- PCA --- #
+digits = load_digits()
+X_digits = digits.data    # 1797 images, each flattened to 64 pixel values
+y_digits = digits.target  # digit labels 0-9
+images   = digits.images  # same data shaped as 8x8 images for plotting
+
+
+# --- PCA Question 1 --- #
+print(f"Digit Shape: {X_digits.shape}")
+print(f"Image Shape: {images.shape}")
+
+fig, axes = plt.subplots(1, 10, figsize = (12,5))
+for i in range(10):
+    ax = axes[i]
+    ax.imshow(images[i], cmap='gray_r')
+    ax.set_title(f'Image {i}')
+plt.suptitle('Digit Display')
+plt.tight_layout()
+plt.savefig('assignment_03/outputs/sample_digits.png')
+plt.show()
+plt.close()
+
+# --- PCA Question 2 --- #
+pca = PCA(n_components=None)
+pca.fit(X_digits)
+scores = pca.transform(X_digits)
+
+scatter = plt.scatter(scores[:, 0], scores[:, 1], c=y_digits, cmap='tab10', s=10)  # c = color array
+plt.colorbar(scatter, label='Digit')
+plt.savefig('assignment_03/outputs/pca_2d_projection.png')
+plt.show()
+
+#Similar digits are clustered in the same space,
+# with some more spread out than others. For
+# example, 9 digits is very compact, but 8 digits 
+# is spread out.
+
+# --- PCA Question 3 --- #
+arr = np.cumsum(pca.explained_variance_ratio_)
+n = np.argmax(arr >= 0.80) + 1
+
+plt.plot(range(1, len(arr) +1), arr, marker = 'o')
+plt.xlabel('Number of Comonents')
+plt.ylabel('Cumulative Explained Varience')
+plt.title('PCA Variance')
+plt.axhline(y=0.80, color='r', linestyle='--', label='80% Threshold')
+plt.legend()
+plt.tight_layout()
+plt.savefig('assignment_03/outputs/pca_variance_explained.png')
+plt.show()
+plt.close()
+
+# You need roughly 15 components to reach above the 80% threshold.
+
+# --- PCA Question 4 --- #
+def reconstruct_digit(sample_idx, scores, pca, n_components):
+    """Reconstruct one digit using the first n_components principal components."""
+    reconstruction = pca.mean_.copy()
+    for i in range(n_components):
+        reconstruction = reconstruction + scores[sample_idx, i] * pca.components_[i]
+    return reconstruction.reshape(8, 8)
+
+n = [2, 5, 15, 40]
+reconstruction = reconstruct_digit(X_digits[0:5], scores, pca, n)
+
+fig, axes = plt.subplots(4,5, figsize=(4,5))
+
+for i in range (len(n)):
+    ax = n[i]
+    ax.imshow(images[i], cmap='gray_r')
+    ax.set_title(f'Image {i}')
+plt.suptitle('PCA Reconstruction')
+plt.tight_layout()
+plt.savefig('assignment_03/outputs/pca_reconstructions.png')
+plt.show()
+plt.close()
