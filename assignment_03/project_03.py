@@ -98,7 +98,7 @@ cats = ['word_freq_free', 'char_freq_!', 'capital_run_length_total']
 for label in cats:
     spam = df.loc[df['spam_label'] == 1, label]
     ham = df.loc[df['spam_label'] == 0, label]
-    plt.boxplot([spam,ham], label = ["Spam", "Not Spam"])
+    plt.boxplot([spam,ham], labels = ["Spam", "Not Spam"])
     plt.title(label)
     plt.ylabel('Frequency')
     plt.legend()
@@ -152,18 +152,17 @@ print(f"Classification Report: {classification_report(y_test, knn_predict2)}")
 
 depth = [3, 5, 10, None]
 for d in depth: 
-    dtree_train = DecisionTreeClassifier(max_depth = d, random_state = 42)
-    dtree_train.fit(x_train, y_train)
-    dtree_predict = dtree_train.predict(x_test)
-    print(f"Max Depth: {d}")
-    print(f"Train Accuracy Score(Decision Tree): {accuracy_score(y_test, dtree_predict)}")
-    print(f"Feature Importance: {dtree_train.feature_importances_}")
+    dtree = DecisionTreeClassifier(max_depth = d, random_state = 42)
+    dtree.fit(x_train, y_train)
 
-    dtree_test = DecisionTreeClassifier(max_depth = d, random_state = 42)
-    dtree_test.fit(x_test, y_test)
-    dtree_predict = dtree_train.predict(x_test)
-    print(f"Test Accuracy Score(Decision Tree): {accuracy_score(y_test, dtree_predict)}")
-    print(f"Feature Importance: {dtree_test.feature_importances_}")
+    train_pred = dtree.predict(x_train)
+    test_pred = dtree.predict(x_test)
+
+    print(f"Max Depth: {d}")
+    print(f"Train Accuracy Score(Decision Tree): {accuracy_score(y_train, train_pred)}")
+    print(f"Test Accuracy Score(Decision Tree): {accuracy_score(y_test, test_pred)}")
+
+    print(f"Feature Importance: {dtree.feature_importances_}")
 
 
     # Accuracy increases with max depth because there 
@@ -176,6 +175,7 @@ dtree.fit(x_train, y_train)
 dtree_predict = dtree.predict(x_test)
 print(f"Scaled Accuracy Score(KNN): {accuracy_score(y_test, dtree_predict)}")
 print(f"Classification Report: {classification_report(y_test, dtree_predict)}")
+
 importance_df_tree = pd.DataFrame({
     'Feature': x_train.columns,
     'Importance': dtree.feature_importances_})
@@ -187,18 +187,37 @@ importance_df_rf = pd.DataFrame({
     'Feature': x_train.columns,
     'Importance': rf.feature_importances_})
 
-logreg1 = LogisticRegression(C=1.0, max_iter=1000, solver='liblinear')
-logreg1.fit(x_train, y_train)
+logreg_scale = LogisticRegression(C=1.0, max_iter=1000, solver='liblinear')
+logreg_scale.fit(x_train_scaled, y_train)
+logreg_scale_pred = logreg_scale.predict(x_test_scaled)
+print(f"Accuracy (Scaled): {accuracy_score(y_test, logreg_scale_pred):.4f}")
+print(f"Classification Report (Scaled): {classification_report(y_test, logreg_scale_pred)}")
 
-logreg2 = LogisticRegression(C=1.0, max_iter=1000, solver='liblinear')
-logreg2.fit(x_train_scaled, y_train)
+logreg_pca = LogisticRegression(C=1.0, max_iter=1000, solver='liblinear')
+logreg_pca.fit(X_train_pca, y_train)
+logreg_pca_pred = logreg_pca.predict(X_test_pca)
+print(f"Accuracy (PCA): {accuracy_score(y_test, logreg_pca_pred):.4f}")
+print(f"Classification Report (PCA): {classification_report(y_test, logreg_pca_pred)}")
+# The scaled data had a marginally higher accuracy score (.9294 vs 0.9186 for PCA).
 
-fig, [ax1, ax2] = plt.subplots(1,2)
-ax1.bar(importance_df_rf['Features'], importance_df_tree['Importance'])
+# Unscaled KNN data had the lowest 
+# accuracy overall, problem because 
+# it was weighting certain data heavier 
+# than other. The Decision tree with a max 
+# iter of Non had an almost perfect 
+# accuracy score. Other testing fell in 
+# the middle with accuracy mostly in the 
+# low 90th percentile.
+
+top10_rf = importance_df_rf.nlargest(10, 'Importance')
+top10_tree = importance_df_tree.nlargest(10, 'Importance')
+
+fig, [ax1, ax2] = plt.subplots(1,2, figsize=(14, 6))
+ax1.bar(top10_rf['Feature'], top10_rf['Importance'])
 ax1.set_title('Important Features (Random Forest)')
 ax1.set_xlabel('Features')
 
-ax2.bar(importance_df_tree['Features'], importance_df_tree['Importance'])
+ax2.bar(top10_tree['Feature'], top10_tree['Importance'])
 ax2.set_title('Important Features (Decision Tree)')
 ax2.set_xlabel('Features')
 
@@ -217,26 +236,37 @@ def get_cv(model, x, y, label):
 
 get_cv(unscaled_knn, x_train, y_train, 'Unscaled KNN')
 get_cv(knn, x_train_scaled, y_train, 'Scaled KNN')
+get_cv(knn, X_train_pca, y_train, 'PCA KNN')
 get_cv(dtree, x_train, y_train, 'Decision Tree')
 get_cv(rf, x_train, y_train, 'Random Forest')
-get_cv(logreg1, x_train, y_train, 'Unscaled Logistical Regression')
-get_cv(logreg2, x_train_scaled, y_train, 'Scaled Logistical Regression')
+get_cv(logreg_scale, x_train_scaled, y_train, 'Scaled Logistical Regression')
+get_cv(logreg_pca, x_train_scaled, y_train, 'Scaled Logistical Regression')
 
 # --- Task 5: Building a Prediction Pipeline --- #
-pca_pipeline = Pipeline([
-    ("scaler",     StandardScaler()),
-    ("pca",        PCA(n_components=n)),  # use your n_components from Task 2
+non_tree_pipeline = Pipeline([
+    ("scaler", StandardScaler()),
+    ("pca", PCA(n_components=n)),  # 'n' calculated in Task 2
     ("classifier", LogisticRegression(C=1.0, max_iter=1000, solver='liblinear'))
 ])
 
-tree_pipeline = Pipeline([
-    ("train", train_test_split())
-    ("classifier", DecisionTreeClassifier(max_depth = None, random_state = 42))
-    ("report", classification_report())
-])
+non_tree_pipeline.fit(x_train, y_train)
+non_tree_pred = non_tree_pipeline.predict(x_test)
+print(f"Classification Report (Non Tree): {classification_report(y_test, non_tree_pred)}")
 
-knn_pipeline = Pipeline([
-    ("train", train_test_split())
-    ("classifiear", KNeighborsClassifier(n_neighbors=5))
-    ("report", classification_report())
+tree_pipeline = Pipeline([
+    ("classifier", RandomForestClassifier(n_estimators=100, random_state=42))
 ])
+tree_pipeline.fit(x_train, y_train)
+tree_pred = tree_pipeline.predict(x_test)
+
+print(f"Classification Report (Tree): {classification_report(y_test, tree_pred)}")
+
+# The non-tree pipeline includes preprocessing steps (StandardScaler and PCA) 
+# because distance- and gradient-based algorithms (like Logistic Regression and KNN) 
+# are sensitive to differing feature scales and high dimensionality. The tree pipeline 
+# contains only the classifier because Decision Trees and Random Forests split features 
+# independently on single feature thresholds and are invariant to scaling.
+#
+# Packaging models into Pipelines prevents data leakage (scalers/PCA fit strictly on 
+# training folds during cross-validation), simplifies deployment, and ensures that raw 
+# unseen test data undergoes identical transformations without manual bookkeeping.

@@ -31,8 +31,13 @@ print(f"Y Test Shape: {y_test.shape}")
 scaler = StandardScaler()
 x_train_scaled = scaler.fit_transform(x_train)
 x_test_scaled = scaler.transform(x_test)
-print(f"X Train Mean: {x_train_scaled}")
-print(f"X Test Mean: {x_test_scaled}")
+print(f"X Train Mean: {x_train_scaled.mean}")
+
+means = x_train_scaled.mean(axis=0)
+for i in range(len(x_train.columns)):
+    col_name = x_train.columns[i]
+    mean_val = means[i]
+    print(f"{col_name}: {mean_val:.4e}")
 
 # If the scaler is fit to the test data 
 # it means it's acciently "seen" it which 
@@ -135,9 +140,10 @@ print(f"Image Shape: {images.shape}")
 
 fig, axes = plt.subplots(1, 10, figsize = (12,5))
 for i in range(10):
+    img_idx = np.where(y_digits == i)[0][0]
     ax = axes[i]
-    ax.imshow(images[i], cmap='gray_r')
-    ax.set_title(f'Image {i}')
+    ax.imshow(images[img_idx], cmap='gray_r')
+    ax.set_title(f'Digit {i}')
 plt.suptitle('Digit Display')
 plt.tight_layout()
 plt.savefig('assignment_03/outputs/sample_digits.png')
@@ -185,7 +191,7 @@ def reconstruct_digit(sample_idx, scores, pca, n_components):
     return reconstruction.reshape(8, 8)
 
 n = [2, 5, 15, 40]
-reconstruction = reconstruct_digit(X_digits[0:5], scores, pca, n)
+reconstruction = reconstruct_digit(X_digits[:4], scores, pca, n)
 
 fig, axes = plt.subplots(4,5, figsize=(4,5))
 
