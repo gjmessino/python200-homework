@@ -111,16 +111,16 @@ print(f"Classicifation Report: {classification_report(y_test, y_pred)}")
 # numbers will not automatically be given more weight.
 
 # --- Logistic Regression Question 1 --- #
-# c_vals = [0.01, 1, 100]
-# for c in c_vals:
-#     model = LogisticRegression(
-#         max_iter = 1000,
-#         solver = 'liblinear',
-#         C = c
-#         )
-#     model.fit(x_train_scaled, y_train)
-#     print(f"C Value: {c}")
-#     print(f"Total Coefficient: {np.abs(model.coef_).sum()}")
+c_vals = [0.01, 1, 100]
+for c in c_vals:
+    model = LogisticRegression(
+        max_iter = 1000,
+        solver = 'liblinear',
+        C = c
+        )
+    model.fit(x_train_scaled, y_train)
+    print(f"C Value: {c}")
+    print(f"Total Coefficient: {np.abs(model.coef_).sum()}")
 
 # --- PCA --- #
 digits = load_digits()
