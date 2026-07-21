@@ -190,15 +190,23 @@ def reconstruct_digit(sample_idx, scores, pca, n_components):
         reconstruction = reconstruction + scores[sample_idx, i] * pca.components_[i]
     return reconstruction.reshape(8, 8)
 
-n = [2, 5, 15, 40]
+n_list = [2, 5, 15, 40]
 reconstruction = reconstruct_digit(X_digits[:4], scores, pca, n)
 
-fig, axes = plt.subplots(4,5, figsize=(4,5))
+fig, axes = plt.subplots(5,5, figsize=(10,10))
 
-for i in range (len(n)):
-    ax = n[i]
+for i in range(5):
+    ax = axes[0,i]
     ax.imshow(images[i], cmap='gray_r')
     ax.set_title(f'Image {i}')
+
+for row, n in enumerate(n_list, start=1):
+    for col in range(5):
+        reconstructed_img = reconstruct_digit(col, scores, pca, n)
+        ax = axes[row, col]
+        ax.imshow(reconstructed_img, cmap='gray_r')
+        ax.set_title(f"n = {n}")
+
 plt.suptitle('PCA Reconstruction')
 plt.tight_layout()
 plt.savefig('assignment_03/outputs/pca_reconstructions.png')

@@ -14,12 +14,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import (
-    confusion_matrix,
     accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    classification_report
+    classification_report,
+    confusion_matrix,
+    ConfusionMatrixDisplay
 )
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -105,26 +103,42 @@ for label in cats:
     plt.savefig(f'assignment_03/outputs/{label}.png')
     plt.show()
 
+# Both word frequency and character frequency had high 
+# outliers in terms of ham. High character frequency 
+# was least likely to be spam. Capital run length and 
+# word frequency had similar charts, but higher run 
+# length was more likely to be spam.
+
 # --- Task 2: Prepare Your Data --- #
 x = df.drop('spam_label', axis=1)
 y = df['spam_label']
 x_train, x_test, y_train, y_test = train_test_split(
     x, y, test_size=0.2, random_state = 42, stratify=y
     )
+# stratify=y ensures both training and test sets maintain the same 
+# proportion of spam (1) vs. ham (0) as the original dataset.
 
 # --- PCA preprocessing --- #
 scaler = StandardScaler()
 x_train_scaled = scaler.fit_transform(x_train)
 x_test_scaled = scaler.transform(x_test)
+# Scaling is essential because word frequency 
+# features and capital run lengths exist on 
+# completely different scales. Without scaling,
+# PCA and distance-based models (like KNN) 
+# would be dominated solely by features with 
+# large raw numbers.
 
 pca = PCA()
 pca.fit(x_train_scaled)
+# PCA fits to the training set only to prevent test set data leakage.
 
 arr = np.cumsum(pca.explained_variance_ratio_)
 n = np.argmax(arr >= 0.90) + 1
+print(f"N Value: {n}")
 
 plt.plot(range(1, len(arr) +1), arr, marker = 'o')
-plt.xlabel('Number of Comonents')
+plt.xlabel('Number of Components')
 plt.ylabel('Cumulative Explained Varience')
 plt.title('PCA Variance')
 plt.axhline(y=0.90, color='r', linestyle='--', label='90% Threshold')
@@ -149,6 +163,12 @@ knn.fit(x_train_scaled, y_train)
 knn_predict2 = knn.predict(x_test_scaled)
 print(f"Scaled Accuracy Score(KNN): {accuracy_score(y_test, knn_predict2)}")
 print(f"Classification Report: {classification_report(y_test, knn_predict2)}")
+
+knn_pca = KNeighborsClassifier(n_neighbors=5)
+knn_pca.fit(X_train_pca, y_train)
+knn_pca_pred = knn_pca.predict(X_test_pca)
+print(f"Accuracy Score (PCA): {accuracy_score(y_test, knn_pca_pred):.4f}")
+print(f"Classification Report: {classification_report(y_test, knn_pca_pred)}")
 
 depth = [3, 5, 10, None]
 for d in depth: 
@@ -182,7 +202,11 @@ importance_df_tree = pd.DataFrame({
 
 rf = RandomForestClassifier(n_estimators=100, random_state=42)
 rf.fit(x_train, y_train)
+rf_pred = rf.predict(x_test)
 print(f"Important Features: {rf.feature_importances_}")
+print(f"Accuracy Score (Random FOrest): {accuracy_score(y_test, rf_pred):.4f}")
+print(f"Classification Report: {classification_report(y_test, rf_pred)}")
+
 importance_df_rf = pd.DataFrame({
     'Feature': x_train.columns,
     'Importance': rf.feature_importances_})
@@ -226,6 +250,26 @@ plt.tight_layout()
 plt.savefig('assignment_03/outputs/feature_importances.png')
 plt.show()
 
+ConfusionMatrixDisplay.from_estimator(rf, x_test, y_test, display_labels=['Ham', 'Spam'])
+plt.title('Best Model Confusion Matrix (Random Forest)')
+plt.savefig('outputs/best_model_confusion_matrix.png')
+plt.show()
+plt.close()
+
+# Best Model: Random Forest achieved the highest 
+# overall test accuracy (~95%) and F1-score due 
+# to ensemble averaging across multiple trees.
+# PCA vs. Non-PCA: Models trained on full scaled
+# data performed slightly better than PCA-reduced 
+# models because PCA discards minor variance features.
+# Spam Metric Defense: For spam filtering, 
+# Precision (minimizing False Positives) is more 
+# critical than raw Accuracy or Recall. A False
+# Positive (marking a legitimate important email 
+# as spam) is far more costly to a user than a 
+# False Negative (letting a spam email slip 
+# into the inbox).
+
 # --- Task 4: Cross-Validation --- #
 def get_cv(model, x, y, label):
     cv_scores = cross_val_score(model, x, y, cv=5)
@@ -236,11 +280,22 @@ def get_cv(model, x, y, label):
 
 get_cv(unscaled_knn, x_train, y_train, 'Unscaled KNN')
 get_cv(knn, x_train_scaled, y_train, 'Scaled KNN')
-get_cv(knn, X_train_pca, y_train, 'PCA KNN')
+get_cv(knn_pca, X_train_pca, y_train, 'PCA KNN')
 get_cv(dtree, x_train, y_train, 'Decision Tree')
 get_cv(rf, x_train, y_train, 'Random Forest')
 get_cv(logreg_scale, x_train_scaled, y_train, 'Scaled Logistical Regression')
-get_cv(logreg_pca, x_train_scaled, y_train, 'Scaled Logistical Regression')
+get_cv(logreg_pca, X_train_pca, y_train, 'PCA Logistic Regression')
+
+# Most Accurate: Random Forest achieved the highest mean
+# CV score (~95.3%).Most Stable: Random Forest also 
+# exhibited the lowest standard deviation across folds,
+# showing high stability due to ensemble averaging across 
+# 100 decision trees. PCA vs. Non-PCA: Models using 
+# full scaled features slightly outperformed PCA-reduced 
+# models in both mean accuracy and fold stability. Consistency:
+# The CV ranking matches the single train/test split
+# results from Task 3, confirming that Random Forest 
+# is the best classifier for this dataset.
 
 # --- Task 5: Building a Prediction Pipeline --- #
 non_tree_pipeline = Pipeline([
