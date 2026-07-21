@@ -4,11 +4,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import requests
 from io import BytesIO
-
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.decomposition import PCA
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import (
     confusion_matrix,
     accuracy_score,
@@ -17,7 +21,6 @@ from sklearn.metrics import (
     f1_score,
     classification_report
 )
-from sklearn.inspection import DecisionBoundaryDisplay
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -112,7 +115,7 @@ x_train, x_test, y_train, y_test = train_test_split(
 # --- PCA preprocessing --- #
 scaler = StandardScaler()
 x_train_scaled = scaler.fit_transform(x_train)
-x_test_scaled = scaler.fit(x_test)
+x_test_scaled = scaler.transform(x_test)
 
 pca = PCA()
 pca.fit(x_train_scaled)
@@ -135,3 +138,105 @@ X_train_pca = pca.transform(x_train_scaled)[:, :n]
 X_test_pca  = pca.transform(x_test_scaled)[:, :n]
 
 # --- Task 3: A Classifier Comparison --- #
+unscaled_knn = KNeighborsClassifier(n_neighbors=5)
+unscaled_knn.fit(x_train, y_train)
+knn_predict1 = unscaled_knn.predict(x_test)
+print(f"Unscaled Accuracy Score (KNN): {accuracy_score(y_test, knn_predict1)}")
+print(f"Classification Report: {classification_report(y_test, knn_predict1)}")
+
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(x_train_scaled, y_train)
+knn_predict2 = knn.predict(x_test_scaled)
+print(f"Scaled Accuracy Score(KNN): {accuracy_score(y_test, knn_predict2)}")
+print(f"Classification Report: {classification_report(y_test, knn_predict2)}")
+
+depth = [3, 5, 10, None]
+for d in depth: 
+    dtree_train = DecisionTreeClassifier(max_depth = d, random_state = 42)
+    dtree_train.fit(x_train, y_train)
+    dtree_predict = dtree_train.predict(x_test)
+    print(f"Max Depth: {d}")
+    print(f"Train Accuracy Score(Decision Tree): {accuracy_score(y_test, dtree_predict)}")
+    print(f"Feature Importance: {dtree_train.feature_importances_}")
+
+    dtree_test = DecisionTreeClassifier(max_depth = d, random_state = 42)
+    dtree_test.fit(x_test, y_test)
+    dtree_predict = dtree_train.predict(x_test)
+    print(f"Test Accuracy Score(Decision Tree): {accuracy_score(y_test, dtree_predict)}")
+    print(f"Feature Importance: {dtree_test.feature_importances_}")
+
+
+    # Accuracy increases with max depth because there 
+    # is more data to work with. I would pick none as 
+    # the max depth given that for both the test and 
+    # train data it had the highest accuracy.
+
+dtree = DecisionTreeClassifier(max_depth = None, random_state = 42)
+dtree.fit(x_train, y_train)
+dtree_predict = dtree.predict(x_test)
+print(f"Scaled Accuracy Score(KNN): {accuracy_score(y_test, dtree_predict)}")
+print(f"Classification Report: {classification_report(y_test, dtree_predict)}")
+importance_df_tree = pd.DataFrame({
+    'Feature': x_train.columns,
+    'Importance': dtree.feature_importances_})
+
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(x_train, y_train)
+print(f"Important Features: {rf.feature_importances_}")
+importance_df_rf = pd.DataFrame({
+    'Feature': x_train.columns,
+    'Importance': rf.feature_importances_})
+
+logreg1 = LogisticRegression(C=1.0, max_iter=1000, solver='liblinear')
+logreg1.fit(x_train, y_train)
+
+logreg2 = LogisticRegression(C=1.0, max_iter=1000, solver='liblinear')
+logreg2.fit(x_train_scaled, y_train)
+
+fig, [ax1, ax2] = plt.subplots(1,2)
+ax1.bar(importance_df_rf['Features'], importance_df_tree['Importance'])
+ax1.set_title('Important Features (Random Forest)')
+ax1.set_xlabel('Features')
+
+ax2.bar(importance_df_tree['Features'], importance_df_tree['Importance'])
+ax2.set_title('Important Features (Decision Tree)')
+ax2.set_xlabel('Features')
+
+plt.suptitle('Feature Important')
+plt.tight_layout()
+plt.savefig('assignment_03/outputs/feature_importances.png')
+plt.show()
+
+# --- Task 4: Cross-Validation --- #
+def get_cv(model, x, y, label):
+    cv_scores = cross_val_score(model, x, y, cv=5)
+    print(label)
+    print(f"Cross Validation Score: {cv_scores}")
+    print(f"Mean: {cv_scores.mean():.3f}")
+    print(f"Standard Deviation: {cv_scores.std():.3f}")
+
+get_cv(unscaled_knn, x_train, y_train, 'Unscaled KNN')
+get_cv(knn, x_train_scaled, y_train, 'Scaled KNN')
+get_cv(dtree, x_train, y_train, 'Decision Tree')
+get_cv(rf, x_train, y_train, 'Random Forest')
+get_cv(logreg1, x_train, y_train, 'Unscaled Logistical Regression')
+get_cv(logreg2, x_train_scaled, y_train, 'Scaled Logistical Regression')
+
+# --- Task 5: Building a Prediction Pipeline --- #
+pca_pipeline = Pipeline([
+    ("scaler",     StandardScaler()),
+    ("pca",        PCA(n_components=n)),  # use your n_components from Task 2
+    ("classifier", LogisticRegression(C=1.0, max_iter=1000, solver='liblinear'))
+])
+
+tree_pipeline = Pipeline([
+    ("train", train_test_split())
+    ("classifier", DecisionTreeClassifier(max_depth = None, random_state = 42))
+    ("report", classification_report())
+])
+
+knn_pipeline = Pipeline([
+    ("train", train_test_split())
+    ("classifiear", KNeighborsClassifier(n_neighbors=5))
+    ("report", classification_report())
+])
