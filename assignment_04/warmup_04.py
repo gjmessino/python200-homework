@@ -1,6 +1,8 @@
+import joblib
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -15,7 +17,6 @@ from sklearn.metrics import (
     classification_report,
     f1_score
 )
-import joblib
 
 os.makedirs("outputs", exist_ok=True)
 os.makedirs("models", exist_ok=True)
@@ -115,17 +116,128 @@ print(f"Best Threshold: {best_thresh}")
 ## --- GridSearchCV --- ##
 
 ## --- GridSearch Question 1 --- ##
-pipeline = Pipeline([
+pipeline1 = Pipeline([
    ("scaler", StandardScaler()),
    ("logreg", LogisticRegression(max_iter=1000))
 ])
 
 param_grid = {
-    'C' : [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+    'logreg__C' : [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
 }
 
-grid_search = GridSearchCV(
+grid_search1 = GridSearchCV(
+    estimator=pipeline1,
     param_grid=param_grid,
     cv=5,
-    scoring="roc_auc"
+    scoring="roc_auc",
 )
+
+grid_search1.fit(X_train, y_train)
+
+print(f"Best C: {grid_search1.best_params_['logreg__C']}")
+print(f"Best AUC: {grid_search1.best_score_:.3f}")
+
+lr = grid_search1.best_estimator_
+y_pred  = lr.predict(X_test)
+y_probs = lr.predict_proba(X_test)[:, 1]
+print(f"Test AUC: {roc_auc_score(y_test, y_probs):.3f}")
+
+# The test picked 100, which is far higher than 
+# what I would have guessed for the best C, 
+# because high C values lead to over fitting.
+
+## --- GridSearch Question 2 --- ##
+
+pipeline2 = Pipeline([
+   ("scaler", StandardScaler()),
+   ("dtree", DecisionTreeClassifier(random_state=42))
+])
+
+param_grid = {
+    'dtree__max_depth' : [2, 3, 5, 8, None]
+}
+
+grid_search2 = GridSearchCV(
+    estimator=pipeline2,
+    param_grid=param_grid,
+    cv=5,
+    scoring="roc_auc",
+)
+
+grid_search2.fit(X_train, y_train)
+
+print(f"Best Max Depth: {grid_search2.best_params_['dtree__max_depth']}")
+print(f"Best AUC: {grid_search2.best_score_:.3f}")
+
+lr = grid_search2.best_estimator_
+y_pred  = lr.predict(X_test)
+y_probs = lr.predict_proba(X_test)[:, 1]
+print(f"Test AUC: {roc_auc_score(y_test, y_probs):.3f}")
+
+# The AUC for the Decision Tree is much 
+# higher than for Logistic Regression.
+# While AUC is important part of this 
+# difference may be attributed to using 
+# C versus max depth, given that C 
+# focuses on avoiding miscaluculations 
+# and max depth is about setting 
+# restrictions on data.
+
+## --- GridSearch Question 3 --- ##
+log_results = pd.DataFrame(grid_search1.cv_results_)
+print('Logistic Regression Results')
+print(
+    log_results[["param_logreg__C", "mean_test_score", "std_test_score"]]
+    .sort_values("mean_test_score", ascending=False)
+    .to_string(index=False)
+)
+
+dtree_results = pd.DataFrame(grid_search2.cv_results_)
+print('Decision Tree Results')
+print(
+    dtree_results[["param_dtree__max_depth", "mean_test_score", "std_test_score"]]
+    .sort_values("mean_test_score", ascending=False)
+    .to_string(index=False)
+)
+
+# Logistic Regression had overall lower 
+# standard deviations. When C = .1 & C = .01 
+# the mean is close together but the standard 
+# deviations are far apart. The C value of .1 
+# is better because a smalled STD score means 
+# the results are closer together and likely 
+# more accurate.
+
+## --- joblib --- ##
+
+## --- joblib Question 1 --- ###
+joblib.dump(lr, 'models/warmup_model.pkl')
+
+loaded_clf = joblib.load("models/warmup_model.pkl")
+
+original_preds = lr.predict(X_test)
+loaded_preds   = loaded_clf.predict(X_test)
+
+assert (original_preds == loaded_preds).all(), "Predictions do not match!"
+print("Predictions match. Model saved and loaded successfully.")
+# If the data had not been scaled the log reg 
+# model might have weighed everything differntly 
+# leading to different optimal results that may 
+# be inaccurate.
+
+## --- joblib Question 2 --- ###
+
+## --- Simulated prediction script --- ##
+new_samples = np.array([
+    [2.5,  1.2, -0.3,  0.8,  1.0, -0.5,  0.2,  0.9, -1.1,  0.4],
+    [-1.0, 0.5,  0.9, -0.7, -0.2,  1.3, -0.8,  0.1,  0.5, -0.3],
+    [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0],
+])
+
+print(f"Predictions: {loaded_clf.predict(new_samples)}")
+print(f"Probabilities: {loaded_clf.predict_proba(new_samples)}")
+
+# I expected the all 0s row to predict 0, which is did. 
+# I was surprised by predict proba giving it decimal
+#  estimates as opposed to a 1 and 0, especially given 
+# that the predict proba for other rows is integers.
