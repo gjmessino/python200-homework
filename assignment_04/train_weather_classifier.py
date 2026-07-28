@@ -30,7 +30,7 @@ params = {
         "precipitation_sum",
         "wind_speed_10m_max",
     ],
-    "timezone": "America/New_York",
+    "timezone": "America/Los_Angeles",
 }
 response = requests.get(url, params=params)
 response.raise_for_status()
@@ -43,7 +43,7 @@ print(df.describe())
 ## --- Step 2: Engineer Labels --- ##
 def label_running_day(row):
     """Return 1 if conditions are good for an outdoor run, 0 otherwise."""
-    temp_ok    = 7 <= row["temperature_2m_max"] <= 29   # 45–84°F (I raised the max temperature because it rarely gets that warm here and people will go outside. Doing so only raised the percentage of good das by 1% so it doesn't really effect anything.)
+    temp_ok    = 7 <= row["temperature_2m_max"] <= 26   # 45–84°F 
     above_freeze = row["temperature_2m_min"] >= 0        # above freezing at dawn
     dry        = row["precipitation_sum"] < 3.0          # light rain or less
     not_windy  = row["wind_speed_10m_max"] < 30          # under 30 km/h
@@ -140,7 +140,9 @@ metadata = {
     "features": FEATURES,
     "best_params": grid_search.best_params_,
     "test_auc": round(test_auc, 4),
-    "trained_on": "2023 Open-Meteo, San Francisco CA (lat 37.7749, lon -122.4194)",
+    "city": "San Francisco, CA",
+    "latitude": 37.7749,
+    "longitude": -122.4194,
     "label_thresholds": {
         "temperature_2m_max": "7–29°C",
         "temperature_2m_min": ">= 0°C",
