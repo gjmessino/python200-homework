@@ -8,6 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -123,9 +124,14 @@ for c in c_vals:
         solver = 'liblinear',
         C = c
         )
-    model.fit(x_train_scaled, y_train)
+    ovr_model = OneVsRestClassifier(estimator=model)
+    ovr_model.fit(x_train_scaled, y_train)
+    print(ovr_model.estimators_)
     print(f"C Value: {c}")
-    print(f"Total Coefficient: {np.abs(model.coef_).sum()}")
+    total = 0
+    for est in ovr_model.estimators_:
+        total += np.abs(est.coef_).sum()
+    print(f"Total Coefficient: {total}")
 
 # --- PCA --- #
 digits = load_digits()
