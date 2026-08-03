@@ -49,12 +49,10 @@ def rewrite_bullets(bullets: list[str]) -> list[dict]:
     results = get_completion(messages)
     try: 
         response = json.loads(results)
-        print("Original Bullet", response["original"])
-        print("Improved Bullet:", response["improved"])
+        return(response)
     except json.JSONDecodeError:
         print("Error: response was not valid JSON")
-        print(results)
-        print(results)
+        return(results)
 
 bullets = [
     "Helped customers with their problems",
@@ -62,7 +60,8 @@ bullets = [
     "Worked with a team to finish the project on time"
 ]
 
-rewrite_bullets(bullets)
+response = rewrite_bullets(bullets)
+print(f"Bullets Response: {response}")
 
 # The original bullets are all too vague, 
 # and don't show how they might apply to a 
@@ -105,7 +104,7 @@ def generate_cover_letter(job_title: str, background: str) -> str:
 
     messages = [{"role": "user", "content": prompt}]
     results = get_completion(messages)
-    print(results)
+    return results
 
 job_title = "Junior Data Engineer"
 background = "Five years of experience as a middle school math teacher; recently completed \
@@ -121,10 +120,10 @@ def is_safe(text: str) -> bool:
     )
     flagged = result.results[0].flagged
     # Your code here: return True if safe, False if flagged, and print a message if flagged
-    if flagged == False:
+    if flagged == True:
         return False
     else:
-        return True
+        return False
 
 red_flag = is_safe("fuck, damn, cunt, bitch, pussy")
 print(red_flag)
@@ -176,8 +175,8 @@ def run_chatbot():
                 if line:
                     raw_bullets.append(line)
             # YOUR CODE: call rewrite_bullets() and print the results
-                new_line = rewrite_bullets(line)
-                print(f"New bullet: {new_line}")
+            new_lines = rewrite_bullets(raw_bullets)
+            print(f"New bullets: {new_lines}")
 
         # 6. Check if the user wants a cover letter
         elif "cover letter" in user_input.lower():
@@ -204,6 +203,7 @@ if __name__ == "__main__":
     run_chatbot()
 
 ## Task 6: Ethics Reflection ##
+# I chose the written format
 # 1. The chatbot isn't prepared for complex situations because of its limited training. 
 # With only 2-3 examples for each step, the model won't inherently know how to respond 
 # to thousands of other jobs and billions of other people. We've seen this play out in 

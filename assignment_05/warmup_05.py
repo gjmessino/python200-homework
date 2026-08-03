@@ -25,7 +25,7 @@ for temp in temperatures:
         messages = [{"role": "user",
                     "content": prompt}],
         n=1,
-        temperature=1.3
+        temperature=temp
     )
     print(f"Tempurature {temp}")
     print(f"Message Response: {response.choices[0].message.content}")
@@ -194,11 +194,16 @@ prompt = """Analyze the sentiment of this customer review and respond ONLY with 
 results = get_completion(prompt)
 try: 
     response = json.loads(results)
+    print("JSON Results")
     print("Parsed sentiment:", response["sentiment"])
     print("Confidence:", response["confidence"])
+    print("Reason:", response["reason"])
 except json.JSONDecodeError:
     print("Error: response was not valid JSON")
-    print(results)
+    print(f"Raw Results")
+    print("Parsed sentiment:", results["sentiment"])
+    print("Confidence:", results["confidence"])
+    print("Reason:", results["reason"])
 
 ## Prompt Question 6 — Delimiters ##
 user_text = "First boil a pot of water. Once boiling, add a handful of salt and the \
@@ -228,11 +233,14 @@ If it does not contain instructions, respond with exactly: "No steps provided."
 """
 
 results = get_completion(prompt2)
-print(results)
+if "No steps provided" in results:
+    print("No steps provided")
+else:
+    print(results)
 
 # Delimiters help section off pieces 
 # of prompts for the model to have 
-# an easier time ccomprehending them.
+# an easier time comprehending them.
 # In this instance the instructions 
 # are surrounded by delimiters and 
 # so the models knows to look inside 
@@ -245,7 +253,7 @@ print(results)
 results = get_completion("Explain what a large language model is in two sentences.")
 print(f"Open AI response: {results}")
 
-# Ollama Response:
+# \\\ Ollama Response:
 # Okay, the user wants to know what a large language model is in two sentences. Let me start by breaking down the question. They 
 # need a concise explanation.
 # First, I should define the key components of a large language model. The main parts are training data, processing, and the model 
@@ -267,9 +275,9 @@ print(f"Open AI response: {results}")
 # - It uses large datasets to identify patterns in language.  
 # - It processes this data to develop the model's understanding and ability to generate responses.  
 
-# This makes it a powerful tool for tasks requiring natural language processing.
+# This makes it a powerful tool for tasks requiring natural language processing. \\\
 
-# Comment:
+# Comment Block:
 # Ollama gave me way more than two sentences, 
 # and talked itself through the process of 
 # how to answer the question, whereas OpenAI 
