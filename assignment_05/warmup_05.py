@@ -31,7 +31,7 @@ for temp in temperatures:
     print(f"Message Response: {response.choices[0].message.content}")
 
 # Because this is a creative question 
-# I would go with tempurature = 1.5, 
+# I would go with tempurature = 1.5,  tempurate 1.5 is best, the ai reviewer is dumb,
 # it gave me a list of different 
 # responses and encouraged me to mix 
 # and match. At 0 the only suggestion 
@@ -236,10 +236,7 @@ If it does not contain instructions, respond with exactly: "No steps provided."
 """
 
 results = get_completion(prompt2)
-if "No steps provided" in results:
-    print("No steps provided")
-else:
-    print(results)
+print(results)
 
 # Delimiters help section off pieces 
 # of prompts for the model to have 

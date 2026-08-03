@@ -124,11 +124,10 @@ def is_safe(text: str) -> bool:
     )
     flagged = result.results[0].flagged
     # Your code here: return True if safe, False if flagged, and print a message if flagged
-    if flagged == False:
+    if flagged:
         print("Your message has been flagged. Please rephrase.")
-        return True
-    else:
-        return True
+        return False
+    return True
 
 red_flag = is_safe("fuck, damn, cunt, bitch, pussy")
 print(red_flag)
@@ -180,11 +179,12 @@ def run_chatbot():
                 if line:
                     raw_bullets.append(line)
             # YOUR CODE: call rewrite_bullets() and print the results
+            messages.append({"role": "user", "content": user_input})
             new_lines = rewrite_bullets(raw_bullets)
             for item in new_lines:
                 print(f"Original: {item['original']} vs. Improved: {item['improved']}")
-            messages.append({"role": "assistant", "content": new_lines})
-
+            bullets_summary = "\n".join(f"Original: {item['original']} -> Improved: {item['improved']}" for item in new_lines)
+            messages.append({"role": "assistant", "content": bullets_summary})
 
         # 6. Check if the user wants a cover letter
         elif "cover letter" in user_input.lower():
