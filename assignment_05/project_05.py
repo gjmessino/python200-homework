@@ -14,6 +14,7 @@ def get_completion(messages, model="gpt-4o-mini", temperature=0.7):
         max_completion_tokens=400
     )
     return response.choices[0].message.content
+
 YOUR_SYSTEM_PROMPT = """
                     You are a career coach who focuses on the tech industry, specifically jobs in software engineering.
                     You are helping candidates who are new to the tech world and need help tailoring a variety of professional experience to tech jobs.
@@ -120,10 +121,14 @@ def is_safe(text: str) -> bool:
     )
     flagged = result.results[0].flagged
     # Your code here: return True if safe, False if flagged, and print a message if flagged
+    if flagged == False:
+        return False
+    else:
+        return True
 
 red_flag = is_safe("fuck, damn, cunt, bitch, pussy")
 print(red_flag)
-green_flag = is_safe("Hi! How are you?")
+green_flag = is_safe("I like butterflies")
 print(green_flag)
 
 ## Task 5: The Chatbot Loop ##
@@ -171,12 +176,16 @@ def run_chatbot():
                 if line:
                     raw_bullets.append(line)
             # YOUR CODE: call rewrite_bullets() and print the results
+                new_line = rewrite_bullets(line)
+                print(f"New bullet: {new_line}")
 
         # 6. Check if the user wants a cover letter
         elif "cover letter" in user_input.lower():
             job_title = input("Job Application Helper: What is the job title? ").strip()
             background = input("Job Application Helper: Briefly describe your background: ").strip()
             # YOUR CODE: call generate_cover_letter() and print the result
+            cover = generate_cover_letter(job_title, background)
+            print(f"New Cover Letter: {cover}")
 
         # 7. Otherwise, handle it as a regular chat turn
         else:
@@ -185,7 +194,28 @@ def run_chatbot():
             # - Call get_completion(messages)
             # - Print the reply
             # - Append the reply to `messages` as an assistant message
+            messages.append({"role": "user", "content": user_input})
+            reply = get_completion(messages)
+            print(f"Sys: {reply}")
+            messages.append({"role": "assistant", "content": reply})
             pass
 
 if __name__ == "__main__":
     run_chatbot()
+
+## Task 6: Ethics Reflection ##
+# 1. The chatbot isn't prepared for complex situations because of its limited training. 
+# With only 2-3 examples for each step, the model won't inherently know how to respond 
+# to thousands of other jobs and billions of other people. We've seen this play out in 
+# the real world when bots are baised against people based on age/race/sex/etc. because 
+# it hasn't encountered data correlated with certain identities.
+
+# 2. Potential problems include: the bot hallucinating (making things up), the bot over/under
+#  selling certain aspects of a candidates professional background, having errors due to lack 
+# of specificity in the user input or in the lack of training, and more. AI models are a tool 
+# and shouldn't be used as a replacement for creating one's own materials.
+
+# 3. In a real world scenario I would train this bot on a lot more data, specifically on more 
+# diverse data. I would add a warning or disclaimer telling users to double check the AI's 
+# work because of potential errors. I'd also train the model on actual job descriptions from 
+# the real world so it knows how to find key words and tailor resumes to specific job posts.
