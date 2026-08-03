@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import json
 from openai import OpenAI
+import regex as re
 
 ## Task 1: Setup and System Prompt ##
 load_dotenv()
@@ -19,6 +20,7 @@ YOUR_SYSTEM_PROMPT = """
                     You are a career coach who focuses on the tech industry, specifically jobs in software engineering.
                     You are helping candidates who are new to the tech world and need help tailoring a variety of professional experience to tech jobs.
                     Focus on application materials (ex. cover letters and resumes), and provide feedback to make candidates as successful as possible.
+                    Always remind the user to review and edit the output before submitting.
                     """
 # One specfic I added was the focus 
 # on candidates with background 
@@ -47,12 +49,12 @@ def rewrite_bullets(bullets: list[str]) -> list[dict]:
     messages = [{"role": "user", "content": prompt}]
 
     results = get_completion(messages)
+    cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", results.strip())
     try: 
-        response = json.loads(results)
+        response = json.loads(cleaned)
         return(response)
     except json.JSONDecodeError:
         print("Error: response was not valid JSON")
-        return(results)
 
 bullets = [
     "Helped customers with their problems",
@@ -61,7 +63,9 @@ bullets = [
 ]
 
 response = rewrite_bullets(bullets)
-print(f"Bullets Response: {response}")
+print(f"Bullets Response")
+for item in response:
+    print(f"Original: {item['original']} vs. Improved: {item['improved']}")
 
 # The original bullets are all too vague, 
 # and don't show how they might apply to a 
@@ -120,10 +124,11 @@ def is_safe(text: str) -> bool:
     )
     flagged = result.results[0].flagged
     # Your code here: return True if safe, False if flagged, and print a message if flagged
-    if flagged == True:
-        return False
+    if flagged == False:
+        print("Your message has been flagged. Please rephrase.")
+        return True
     else:
-        return False
+        return True
 
 red_flag = is_safe("fuck, damn, cunt, bitch, pussy")
 print(red_flag)
@@ -176,7 +181,10 @@ def run_chatbot():
                     raw_bullets.append(line)
             # YOUR CODE: call rewrite_bullets() and print the results
             new_lines = rewrite_bullets(raw_bullets)
-            print(f"New bullets: {new_lines}")
+            for item in new_lines:
+                print(f"Original: {item['original']} vs. Improved: {item['improved']}")
+            messages.append({"role": "assistant", "content": new_lines})
+
 
         # 6. Check if the user wants a cover letter
         elif "cover letter" in user_input.lower():
@@ -185,6 +193,7 @@ def run_chatbot():
             # YOUR CODE: call generate_cover_letter() and print the result
             cover = generate_cover_letter(job_title, background)
             print(f"New Cover Letter: {cover}")
+            messages.append({"role": "assistant", "content": cover})
 
         # 7. Otherwise, handle it as a regular chat turn
         else:
@@ -203,19 +212,28 @@ if __name__ == "__main__":
     run_chatbot()
 
 ## Task 6: Ethics Reflection ##
-# I chose the written format
-# 1. The chatbot isn't prepared for complex situations because of its limited training. 
-# With only 2-3 examples for each step, the model won't inherently know how to respond 
-# to thousands of other jobs and billions of other people. We've seen this play out in 
-# the real world when bots are baised against people based on age/race/sex/etc. because 
-# it hasn't encountered data correlated with certain identities.
+# I chose the written format (Option A)
 
-# 2. Potential problems include: the bot hallucinating (making things up), the bot over/under
-#  selling certain aspects of a candidates professional background, having errors due to lack 
-# of specificity in the user input or in the lack of training, and more. AI models are a tool 
-# and shouldn't be used as a replacement for creating one's own materials.
+# 1. Bias: This bot was trained on a narrow slice of resume/cover-letter text, which likely
+# skews toward corporate, English-language, white-collar norms. That means it could favor
+# a "polished" American business tone over other valid communication styles (e.g., more direct
+# or more formal phrasing common in other cultures), and it may perform better for well-documented
+# industries like tech or finance than for trades, nonprofit, or informal-economy work where
+# there's less training data to draw from. Someone whose writing style, name, or career history
+# doesn't match the bot's dominant training patterns could get advice that subtly nudges them
+# toward sounding "less like themselves" to seem more hireable.
 
-# 3. In a real world scenario I would train this bot on a lot more data, specifically on more 
-# diverse data. I would add a warning or disclaimer telling users to double check the AI's 
-# work because of potential errors. I'd also train the model on actual job descriptions from 
-# the real world so it knows how to find key words and tailor resumes to specific job posts.
+# 2. User harm: If a job-seeker submitted the bot's output without review, the biggest risks are
+# hallucinated details (e.g., invented dates, skills, or achievements the candidate never had),
+# generic phrasing that doesn't actually match the job posting, and tone/content mismatches that
+# make the applicant sound overqualified, underqualified, or just inauthentic to a recruiter.
+# In the worst case, a hallucinated claim could be caught in an interview or background check,
+# damaging the candidate's credibility rather than helping it.
+
+# 3. Guardrail: I'd add a mandatory human-review checkpoint before any output leaves the tool —
+# for example, a UI step that requires the user to check a box confirming they've verified every
+# factual claim (dates, titles, skills) against their real background before they can copy or
+# export the text. I'd pair this with a visible disclaimer that the tool can produce inaccurate
+# or generic content and is meant to draft, not finalize, application materials. This directly
+# targets the hallucination/harm risk from question 2 while nudging users to catch bias-driven
+# phrasing (question 1) before it reaches an employer.

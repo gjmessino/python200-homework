@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import json
 from openai import OpenAI
-import os
+import regex as re
 
 ## API Question 1 ##
 load_dotenv()
@@ -32,12 +32,14 @@ for temp in temperatures:
 
 # Because this is a creative question 
 # I would go with tempurature = 1.5, 
-# it gave me a list of 15 different 
+# it gave me a list of different 
 # responses and encouraged me to mix 
-# and match. The other two temperatures 
-# gave very similar responses that 
-# suggested almost identical names,
-# with a brief summary of why it picked them.
+# and match. At 0 the only suggestion 
+# I got was a name. At .7 I got a brief 
+# description. But no matter how many
+# times I ran it 1.5 gave me multiple
+# name options with descriptions 
+# explaining each.
 
 ## API Question 3 ##
 response = client.chat.completions.create(
@@ -70,7 +72,11 @@ print(f"Response Message: {response.choices[0].message.content}")
 # reflection on how LLMs can only 
 # predict the next word and can't 
 # actually give a concise answer 
-# unless specifically requested.
+# unless specifically requested. 
+# While there are benefits to 
+# limited tokens, like cost saving 
+# and preventing overly long answers,
+# for this prompt 15 is far too few.
 
 ## System Question 1 ##
 messages = [
@@ -124,10 +130,6 @@ print(response.choices[0].message.content)
 
 ## Prompt Question 1 — Zero-Shot ##
 def get_completion(prompt: str, model="gpt-4o-mini", temperature=0):
-    """
-    Send a prompt to the model and return the assistant's text reply.
-    This helper keeps our examples clean and focused on the prompt itself.
-    """
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}], 
@@ -141,14 +143,15 @@ reviews = [
     "Great price, but the documentation is nearly impossible to follow."
 ]
 
-prompt = f'For the three reviews in {reviews} classify the sentiment of each as positive, negative or mixed. Make sure to number your responses'
-results = get_completion(prompt)
-print(results)
+zero_prompt = f'For the three reviews in {reviews} classify the sentiment of each as positive, negative or mixed. Make sure to number your responses'
+results = get_completion(zero_prompt)
+print(f"Zero Shot: {results}")
 
 ## Prompt Question 2 — One-Shot ##
+one_prompt = f'Use an example of a review and how it is structions as a bases for these other reviews and classify the sentiment of each as positive, negative or mixed. Make sure to number your responses'
 example = f'Example: Review: "Fast shipping but the item arrived damaged." Sentiment: mixed'
-results = get_completion(prompt + example)
-print(results)
+results = get_completion(one_prompt + example)
+print(f"One Shot: {results}")
 
 # The zero-shot only gave me the number 
 # and how it categorized each review, 
@@ -157,13 +160,14 @@ print(results)
 # as either "review" or "sentiment."
 
 ## Prompt Question 3 — Few-Shot ##
+multi_prompt = 'Use three example reviews to structure your response then classify the sentiment of other reviews as positive, negative or mixed. Make sure to number your responses'
 examples = """Review: The service was outstanding! Sentiment: Positive,
             Review: Great app but crashes often. Sentiment: Mixed,
             Review: Total waste of money. Sentiment: Negative"""
 
 
 results = get_completion(prompt + examples)
-print(results)
+print(f"Few Shot: {results}")
 
 # For this example both one-shot and few-shot 
 # prompts were unnecessary. The AI classified 
@@ -192,18 +196,17 @@ prompt = """Analyze the sentiment of this customer review and respond ONLY with 
         Review: I've been using this tool for three months. It handles large datasets well, 
         but the UI is clunky and the export options are limited."""
 results = get_completion(prompt)
+print(f"Raw Results")
+print(results)
+cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", results.strip())
 try: 
-    response = json.loads(results)
+    response = json.loads(cleaned)
     print("JSON Results")
     print("Parsed sentiment:", response["sentiment"])
     print("Confidence:", response["confidence"])
     print("Reason:", response["reason"])
 except json.JSONDecodeError:
     print("Error: response was not valid JSON")
-    print(f"Raw Results")
-    print("Parsed sentiment:", results["sentiment"])
-    print("Confidence:", results["confidence"])
-    print("Reason:", results["reason"])
 
 ## Prompt Question 6 — Delimiters ##
 user_text = "First boil a pot of water. Once boiling, add a handful of salt and the \
