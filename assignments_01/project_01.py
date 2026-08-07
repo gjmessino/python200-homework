@@ -86,13 +86,24 @@ def hypo_testing(df):
     logger.info(f"P Value: {pval}")
     logger.info(f"2019 Mean: {mean_2019}")
     logger.info(f"2020 Mean: {mean_2020}")
-    
-    alpha = 0.05
+
+    alpha = 0.5
     if pval < alpha:
         direction = "decreased" if mean_2020 < mean_2019 else "increased"
-        logger.info(f"Significant: Global happiness scores {direction} between 2019 and 2020.")
+        logger.info(
+            f"Pandemic Impact: Global happiness scores significantly {direction} "
+            f"between 2019 (mean={mean_2019:.3f}) and 2020 (mean={mean_2020:.3f}), p = {pval:.4f}. "
+            f"A difference this large would be unlikely to occur by chance alone, "
+            f"suggesting a real shift in global happiness around the start of the pandemic."
+        )
     else:
-        logger.info("Insignificant: No statistically significant change in happiness scores was detected.")
+        logger.info(
+            f"Pandemic Impact: No statistically significant change was detected between 2019 "
+            f"(mean={mean_2019:.3f}) and 2020 (mean={mean_2020:.3f}), p = {pval:.4f}. "
+            f"Since p is well above 0.05, a gap this size could plausibly occur by chance even if "
+            f"the pandemic had no real effect on global happiness — so this data does not support "
+            f"the claim that happiness meaningfully changed between those two years."
+    )
     # Because the samples are perfectly aligned by country, 
     # an independent t-test(ttest_ind) is used to check if the mean difference s
     # deviates significantly region by region. The P Val is .592 meaning 
@@ -140,31 +151,25 @@ def corr_comparison(df):
     
     sig_original_vars = []
     sig_bonferroni_vars = []
-    
     for var in explanatory_vars:
         if var not in df.columns:
             continue
         coeff, pval = stats.pearsonr(df_clean[var], df_clean['Happiness score'])
-        coeff_dict[var] = coeff   
-            
-        if pval < original_alpha:
-            sig_original_vars.append(var)
-        if pval < adjusted_alpha:
-            sig_bonferroni_vars.append(var)
-        
-        logger.info(f"Variable: {var}")
-        logger.info(f"Pearson r: {coeff}")
-        logger.info(f"P Value: {pval}")
-        
-    best_var = None
-    best_coeff = 0.0
-    if sig_bonferroni_vars:
-        best_var = max(sig_bonferroni_vars, key=lambda v: abs(coeff_dict[v]))
-        best_coeff = coeff_dict[best_var]
-    else:
-        logger.info("No variables remained significant after Bonferroni correction.")
+        coeff_dict[var] = coeff
 
-    return best_var, best_coeff, sig_original_vars, sig_bonferroni_vars    
+        sig_at_05 = pval < original_alpha
+        sig_after_bonferroni = pval < adjusted_alpha
+        if sig_at_05:
+            sig_original_vars.append(var)
+        if sig_after_bonferroni:
+            sig_bonferroni_vars.append(var)
+
+        logger.info(f"Variable: {var}")
+        logger.info(f"Pearson r: {coeff:.4f}, p = {pval:.5f}")
+        logger.info(f"Significant at alpha=0.05: {sig_at_05} | Significant after Bonferroni: {sig_after_bonferroni}")
+
+    logger.info(f"Significant at alpha=0.05 ({len(sig_original_vars)} of {num_tests}): {', '.join(sig_original_vars) or 'none'}")
+    logger.info(f"Remain significant after Bonferroni correction ({len(sig_bonferroni_vars)} of {num_tests}): {', '.join(sig_bonferroni_vars) or 'none'}")
 
 ## Task 6: Summary Report
 @task

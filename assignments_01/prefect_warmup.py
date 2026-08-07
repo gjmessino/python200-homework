@@ -23,6 +23,13 @@ def pipeline_flow():
     my_dict = summarize_data(clean)
     return my_dict
 
+@flow
+def pipeline_flow(arr):
+    series = create_series(arr)
+    clean = clean_data(series)
+    my_dict = summarize_data(clean)
+    return my_dict
+
 arr = np.array([12.0, 15.0, np.nan, 14.0, 10.0, np.nan, 18.0, 14.0, 16.0, 22.0, np.nan, 13.0])
 
 if __name__ == "__main__":
