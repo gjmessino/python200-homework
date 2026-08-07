@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 
 ## Task 1: Load and Explore
-df = pd.read_csv('assignment_02/student/student-mat.csv', sep=';')
+df = pd.read_csv('assignment_02/student-mat.csv', sep=';')
 print(f"Shape: {df.shape}")
 print(f"Data Types: {df.dtypes}")
 print(df.head())
@@ -185,7 +185,7 @@ plt.plot([min_val, max_val], [min_val, max_val], color='red', linestyle='--', la
 plt.xlabel('Predictions')
 plt.ylabel('Real Data')
 plt.title('Predicted vs Actual (Full Model)')
-plt.savefig('outputs/predicted_vs_actual.png')
+plt.savefig('outputs/predicted_vs_actual_g3.png')
 plt.show()
 
 # The graph shows the model could use some 

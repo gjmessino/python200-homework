@@ -132,5 +132,5 @@ plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='red'
 plt.xlabel('Actual Cost')
 plt.ylabel('Predicted Cost')
 plt.legend()
-plt.savefig('outputs/actual_vs_predicted.png')
+plt.savefig('outputs/predicted_vs_actual_cost.png')
 plt.show()
