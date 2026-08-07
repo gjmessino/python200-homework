@@ -43,11 +43,12 @@ kmeans.fit(X_clusters)
 centers = kmeans.cluster_centers_
 labels = kmeans.predict(X_clusters)
 
-plt.scatter(X_clusters[:,0], X_clusters[:,1], c=kmeans.labels_, cmap='viridis', s=60, alpha=0.7)
+plt.scatter(X_clusters[:,0], X_clusters[:,1], c=labels, cmap='viridis', s=60, alpha=0.7)
 plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, marker='X', label='Centers')
 plt.title('Data Clusters')
 plt.xlabel('X')
 plt.ylabel('Y')
+plt.legend()
 
 plt.tight_layout()
 plt.savefig('outputs/kmeans_clusters.png')

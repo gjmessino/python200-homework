@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 
 ## Task 1: Load and Explore
-df = pd.read_csv('assignment_02/student-mat.csv', sep=';')
+df = pd.read_csv('assignments_02/student_performance_math.csv', sep=';')
 print(f"Shape: {df.shape}")
 print(f"Data Types: {df.dtypes}")
 print(df.head())
@@ -23,7 +23,7 @@ plt.show()
 
 ## Task 2: Preprocess the Data
 print(f"Old Shape: {df.shape}")
-new_df = df.drop(df[df['G3'] == 0].index)
+new_df = df.drop(df[df['G3'] == 0].index).copy()
 print(f"New Shape: {new_df.shape}")
 
 # There were 395 rows, now it is down to 357 which 
@@ -107,8 +107,8 @@ plt.hist(new_df['failures'], color = 'green', alpha = .7, label='Failures')
 plt.hist(new_df['Medu'], color = 'pink', alpha=.7, label='Motherds Education')
 plt.title('Failures vs Mothers Education')
 plt.legend()
-plt.show()
 plt.savefig('outputs/failures_medu.png')
+plt.show()
 
 # For my second plot I looked at the two features with 
 # the highest and lowest correlation values 
@@ -223,3 +223,17 @@ print(f"R Squared (with G1): {r2}")
 # absences, study habits, parental education, etc.), even though that model explains
 # less of the variance. The tradeoff is: wait for G1 and get a much more accurate
 # but much later warning, or act early on a noisier signal.
+
+# --- Summary ---
+# Filtered dataset: 357 students; test set: ~72 students (20% split).
+# The full model's RMSE was about [X] points on a 0-20 scale, meaning predictions
+# are typically off by about [X] grade points, or roughly [X/20*100]% of the scale.
+# Test R^2 of [X] means the model explains about [X*100]% of the variation in G3
+# using only background/behavioral features -- decent, but far from perfect.
+# Largest positive coefficient: [feature] ([+X.XXX]) -- [what it means].
+# Largest negative coefficient: schoolsup (-X.XXX) -- surprising, since extra
+# school support intuitively should help; likely reflects that schools assign
+# support to students who are already struggling (a selection effect, not
+# support causing worse grades).
+# Most surprising result: [pick one -- e.g. schoolsup's negative sign, or how
+# much R^2 jumped once G1 was added].
