@@ -7,18 +7,16 @@ from scipy import stats
 ## Task 1: Load Multiple Years of Data
 @task(retries=3, retry_delay_seconds=2)
 def load_data():
-    num = 2015
+    year = 2015
     results = []
     for i in range(10):
-        happiness_file = f'happiness_project/world_happiness_{num}.csv'
-        df = pd.read_csv(happiness_file, sep=';', decimal=',')
-        df['year'] = num
-        if num == 24:
-            df = df.rename(columns = {"Ladder score": "Happiness score"})
+        happiness_file = f'assignments_01/happiness_project/world_happiness_{year}.csv'
+        df = pd.read_csv(happiness_file, sep=';', decimal = ',', index=False)
+        df['year'] = year
         results.append(df)
-        num+=1
+        year += 1
     df = pd.concat(results, ignore_index=True)
-    df.to_csv("assignments_01/outputs/merged_happiness.csv")
+    df.to_csv('assignments_01/outputs/merged_happiness.csv')
     return df
 
 ## Task 2: Descriptive Statistics
@@ -41,21 +39,19 @@ def make_visuals(df):
     plt.figure(1)
     plt.hist(df['Happiness score'])
     plt.title('Happiness Score Histogram')
+    plt.xlabel('Score')
+    plt.ylabel('Commonality')
     plt.savefig("assignments_01/outputs/happiness_histogram.png")
-    plt.close()
     logger.info("Histogram")
 
     plt.figure(2)
-    for year in df['year']:
-        placement = [1,df['year'].nunique,1]
-        plt.subplot(''.join(placement))
-        sns.boxplot(x = 'year', y = df.loc(df['year'] == year, ['Happiness score']))
-        plt.xlabel("Year")
-        plt.ylabel("Happiness Score")
-        plt.title(f"Happiness by Year: {year}")
-        placement[2] += 1
-    plt.savefig("assignments_01/outputs/happiness_by_year.png")
-    plt.close()
+    years_sorted = sorted(df['year'].unique())
+    data_by_year = [df.loc[df['year'] == y, 'Happiness score'].dropna() for y in years_sorted]
+    plt.boxplot(data_by_year, labels=years_sorted)
+    plt.title('Happiness Boxplot')
+    plt.ylabel('Happiness Score')
+    plt.xlabel('Year')
+    plt.savefig('assignments_01/outputs/happiness_by_year.png')
     logger.info("Boxplot")
 
     plt.figure(3)
@@ -64,7 +60,6 @@ def make_visuals(df):
     plt.ylabel("Happiness Score")
     plt.title("Happiness based on GDP")
     plt.savefig("assignments_01/outputs/gdp_vs_happiness.png")
-    plt.close()
     logger.info("Scatter")
 
     numeric_df = df.corr(method = 'pearson', numeric_only=True)
@@ -73,7 +68,6 @@ def make_visuals(df):
     sns.heatmap(numeric_df, annot=True)
     plt.title("Happiness Heatmap")
     plt.savefig("assignments_01/outputs/correlation_heatmap.png")
-    plt.close()
     logger.info("Heatmap")
 
 ## Task 4: Hypothesis Testing
@@ -99,16 +93,23 @@ def hypo_testing(df):
         logger.info(f"Significant: Global happiness scores {direction} between 2019 and 2020.")
     else:
         logger.info("Insignificant: No statistically significant change in happiness scores was detected.")
-    # Because the samples are perfectly paired/aligned by country, 
-    # a paired t-test(ttest_rel) is used to check if the mean difference 
-    # deviates significantly from zero.
+    # Because the samples are perfectly aligned by country, 
+    # an independent t-test(ttest_ind) is used to check if the mean difference s
+    # deviates significantly region by region. The P Val is .592 meaning 
+    # there wasn't a significant difference in happiness levels during the
+    # pandemic.
     
+    logger.info('Regional Happiness Differences (ttest 2)')
     high_region = df[df['Regional indicator'] == 'Western Europe']['Happiness score']
     low_region = df[df['Regional indicator'] == 'Sub-Saharan Africa']['Happiness score']
 
     tstat, pval2 = stats.ttest_ind(high_region, low_region, nan_policy='omit')
 
     logger.info(f"Regional Test (Western Europe vs Sub-Saharan Africa):")
+    if pval2 < alpha:
+        logger.info(f"Significant: Western Europe's happiness scores differ significantly from Sub-Saharan Africa's (p = {pval2:.4g}).")
+    else:
+        logger.info("Insignificant: No statistically significant difference detected between the two regions.")
     logger.info(f"T Stat: {tstat}, P Value: {pval2}")
     # The second test compares the historical differences between 
     # Western Europe and Sub-Saharan Africa across all years using 
@@ -132,9 +133,10 @@ def corr_comparison(df):
     num_tests = len(explanatory_vars)
     original_alpha = 0.05
     adjusted_alpha = original_alpha / num_tests
-    
-    best_var = None
-    best_coeff = 0.0
+
+    logger.info(f"Adjusted alpha (Bonferroni, n={num_tests} tests): {adjusted_alpha:.5f}")
+
+    coeff_dict = {}
     
     sig_original_vars = []
     sig_bonferroni_vars = []
@@ -142,11 +144,8 @@ def corr_comparison(df):
     for var in explanatory_vars:
         if var not in df.columns:
             continue
-        coeff, pval = stats.pearsonr(df_clean[var], df_clean['Happiness score'])       
-        
-        if abs(coeff) > abs(best_coeff):
-            best_coeff = coeff
-            best_var = var
+        coeff, pval = stats.pearsonr(df_clean[var], df_clean['Happiness score'])
+        coeff_dict[var] = coeff   
             
         if pval < original_alpha:
             sig_original_vars.append(var)
@@ -157,8 +156,15 @@ def corr_comparison(df):
         logger.info(f"Pearson r: {coeff}")
         logger.info(f"P Value: {pval}")
         
-    return best_var, best_coeff, sig_original_vars, sig_bonferroni_vars
+    best_var = None
+    best_coeff = 0.0
+    if sig_bonferroni_vars:
+        best_var = max(sig_bonferroni_vars, key=lambda v: abs(coeff_dict[v]))
+        best_coeff = coeff_dict[best_var]
+    else:
+        logger.info("No variables remained significant after Bonferroni correction.")
 
+    return best_var, best_coeff, sig_original_vars, sig_bonferroni_vars    
 
 ## Task 6: Summary Report
 @task
@@ -173,7 +179,7 @@ def summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff, sig_ori
     logger.info(f"Bottom 3 happiest regions: {', '.join(regional_means.tail(3).index.tolist())}")
     
     alpha = 0.05
-    if pval < alpha:
+    if pval > alpha:
         direction = "decreased" if mean_2020 < mean_2019 else "increased"
         logger.info(f"Pandemic Impact: Global happiness scores significantly {direction} (p = {pval:.4f}).")
     else:
