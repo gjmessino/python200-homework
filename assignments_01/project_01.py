@@ -87,7 +87,7 @@ def hypo_testing(df):
     logger.info(f"2019 Mean: {mean_2019}")
     logger.info(f"2020 Mean: {mean_2020}")
 
-    alpha = 0.5
+    alpha = 0.05
     if pval < alpha:
         direction = "decreased" if mean_2020 < mean_2019 else "increased"
         logger.info(
@@ -129,18 +129,18 @@ def hypo_testing(df):
     
     return pval, mean_2019, mean_2020
 
-## Task 5: Correlation and Multiple Comparisons
+## Task 5: Correlation and Multiple Comparisons 
 @task
 def corr_comparison(df):
     logger = get_run_logger()
-    
+
     explanatory_vars = [
-        'GDP per capita', 'Social support', 'Healthy life expectancy', 
+        'GDP per capita', 'Social support', 'Healthy life expectancy',
         'Freedom to make life choices', 'Generosity', 'Perceptions of corruption'
     ]
-    
+
     df_clean = df.dropna(subset=['Happiness score'] + explanatory_vars)
-    
+
     num_tests = len(explanatory_vars)
     original_alpha = 0.05
     adjusted_alpha = original_alpha / num_tests
@@ -148,7 +148,7 @@ def corr_comparison(df):
     logger.info(f"Adjusted alpha (Bonferroni, n={num_tests} tests): {adjusted_alpha:.5f}")
 
     coeff_dict = {}
-    
+
     sig_original_vars = []
     sig_bonferroni_vars = []
     for var in explanatory_vars:
@@ -171,14 +171,25 @@ def corr_comparison(df):
     logger.info(f"Significant at alpha=0.05 ({len(sig_original_vars)} of {num_tests}): {', '.join(sig_original_vars) or 'none'}")
     logger.info(f"Remain significant after Bonferroni correction ({len(sig_bonferroni_vars)} of {num_tests}): {', '.join(sig_bonferroni_vars) or 'none'}")
 
+    best_var = None
+    best_coeff = 0.0
+    if sig_bonferroni_vars:
+        best_var = max(sig_bonferroni_vars, key=lambda v: abs(coeff_dict[v]))
+        best_coeff = coeff_dict[best_var]
+    else:
+        logger.info("No variables remained significant after Bonferroni correction.")
+
+    return best_var, best_coeff, sig_original_vars, sig_bonferroni_vars
+
 ## Task 6: Summary Report
+@task
 @task
 def summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff, sig_original, sig_bonferroni):
     logger = get_run_logger()
-    
+
     logger.info(f"Number of Countries: {df['Country'].nunique()}")
     logger.info(f"Years: {df['year'].nunique()}")
-        
+
     regional_means = df.groupby('Regional indicator')['Happiness score'].mean().sort_values(ascending=False)
     logger.info(f"Top 3 happiest regions: {', '.join(regional_means.head(3).index.tolist())}")
     logger.info(f"Bottom 3 happiest regions: {', '.join(regional_means.tail(3).index.tolist())}")
@@ -186,15 +197,25 @@ def summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff, sig_ori
     alpha = 0.05
     if pval < alpha:
         direction = "decreased" if mean_2020 < mean_2019 else "increased"
-        logger.info(f"Pandemic Impact: Global happiness scores significantly {direction} (p = {pval:.4f}).")
+        logger.info(
+            f"Pandemic Impact: At alpha = 0.05, global happiness scores significantly {direction} "
+            f"between 2019 and 2020 (p = {pval:.4f}) — a difference this large is unlikely to be due to chance."
+        )
     else:
-        logger.info("Pandemic Impact: No statistically significant change found between 2019 and 2020.")
-        alpha = 0.05
-        
-    logger.info(f"Strongest Predictor: '{best_var}' (r = {best_coeff:.4f}).")
-    logger.info(f"Variables significant at baseline alpha (0.05): {', '.join(sig_original)}")
-    logger.info(f"Variables remaining significant after Bonferroni correction: {', '.join(sig_bonferroni)}")
-  
+        logger.info(
+            f"Pandemic Impact: At alpha = 0.05, no statistically significant change was found between "
+            f"2019 and 2020 (p = {pval:.4f}) — a gap this size could plausibly happen by chance, so this "
+            f"data does not support the claim that happiness meaningfully shifted at the start of the pandemic."
+        )
+
+    if best_var:
+        logger.info(f"Strongest Predictor: '{best_var}' (r = {best_coeff:.4f}).")
+    else:
+        logger.info("Strongest Predictor: none of the variables remained significant after Bonferroni correction.")
+
+    logger.info(f"Variables significant at baseline alpha (0.05): {', '.join(sig_original) or 'none'}")
+    logger.info(f"Variables remaining significant after Bonferroni correction: {', '.join(sig_bonferroni) or 'none'}")  
+
 @flow
 def happiness_pipeline():
     df = load_data()

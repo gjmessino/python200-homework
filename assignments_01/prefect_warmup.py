@@ -16,12 +16,6 @@ def summarize_data(series):
                'mode': series.mode()[0],
                'std': series.std()}
     return my_dict
-@flow
-def pipeline_flow():
-    series = create_series(arr)
-    clean = clean_data(series)
-    my_dict = summarize_data(clean)
-    return my_dict
 
 @flow
 def pipeline_flow(arr):
