@@ -11,12 +11,12 @@ def load_data():
     results = []
     for i in range(10):
         happiness_file = f'assignments_01/happiness_project/world_happiness_{year}.csv'
-        df = pd.read_csv(happiness_file, sep=';', decimal = ',', index=False)
+        df = pd.read_csv(happiness_file, sep=';', decimal = ',')
         df['year'] = year
         results.append(df)
         year += 1
     df = pd.concat(results, ignore_index=True)
-    df.to_csv('assignments_01/outputs/merged_happiness.csv')
+    df.to_csv('assignments_01/outputs/merged_happiness.csv',  index=False)
     return df
 
 ## Task 2: Descriptive Statistics
@@ -177,13 +177,14 @@ def summary_report(df, pval, mean_2019, mean_2020, best_var, best_coeff, sig_ori
     regional_means = df.groupby('Regional indicator')['Happiness score'].mean().sort_values(ascending=False)
     logger.info(f"Top 3 happiest regions: {', '.join(regional_means.head(3).index.tolist())}")
     logger.info(f"Bottom 3 happiest regions: {', '.join(regional_means.tail(3).index.tolist())}")
-    
+
     alpha = 0.05
-    if pval > alpha:
+    if pval < alpha:
         direction = "decreased" if mean_2020 < mean_2019 else "increased"
         logger.info(f"Pandemic Impact: Global happiness scores significantly {direction} (p = {pval:.4f}).")
     else:
         logger.info("Pandemic Impact: No statistically significant change found between 2019 and 2020.")
+        alpha = 0.05
         
     logger.info(f"Strongest Predictor: '{best_var}' (r = {best_coeff:.4f}).")
     logger.info(f"Variables significant at baseline alpha (0.05): {', '.join(sig_original)}")
