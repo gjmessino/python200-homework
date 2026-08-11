@@ -34,7 +34,8 @@ else:
 # or at least consider the lack of knowledge for further considerations in their project. When an AI 
 # is confidently wrong, users may take what it says as fact which can be damaging to projects and businesses. 
 # An AI's tone helps indicate the usefulness/relevency of the information being given, and can shape 
-# how people interact with it.
+# how people interact with it. For example, if a reasearcher is given incorrect information through a 
+# hallucination, that could mess up their entire study.
 
 ## Concepts Question 3
 
@@ -52,12 +53,12 @@ steps = [
 
 # Right Order (with comments on the side)
 steps = [
-    "Receive the user's query", #The users input is sent to the AI so that the AI can break it down and put together an answer.
-    "Embed the user's query", #User's input is converted into numerical values to help sort by relevency
     "Extract text from source documents", #The AI looks at relevent documents are turns relevent text into strings.
     "Split text into chunks", #The text is broken into smaller pieces making it easier to sort through
-    "Retrieve the most relevant chunks", #The AI selects chunks that are deemed to be the most useful.
     "Convert text chunks into embeddings", #The AI takes the relevent chucks and breaks them into numerical values
+    "Receive the user's query", #The users input is sent to the AI so that the AI can break it down and put together an answer.
+    "Embed the user's query", #User's input is converted into numerical values to help sort by relevency
+    "Retrieve the most relevant chunks", #The AI selects chunks that are deemed to be the most useful.
     "Inject retrieved chunks into the prompt", #The AI takes relevent pieces of text from the chunks
     "Generate a response from the LLM", #AI forms a response and outputs it to the user
 ]
@@ -68,7 +69,7 @@ def simple_keyword_retrieval(query, documents, verbose=True):
     stopwords = {
         "a", "an", "the", "and", "or", "in", "on", "of", "for", "to", "is",
         "are", "was", "were", "by", "with", "at", "from", "that", "this",
-        "as", "be", "it", "its", "their", "they", "we", "you", "our"
+        "as", "be", "it", "its", "their", "they", "we", "you", "your", "our"
     }
     translator = str.maketrans("", "", string.punctuation)
 
@@ -117,9 +118,9 @@ documents = {
 response = simple_keyword_retrieval(query, documents, True)
 print(response)
 
-# Comment: loyalty.txt was chosen as the most relevent because of it's prevelency of the word "your". 
-# Though "your" is not relevent to the question its not one of the stop words and so was considered 
-# to have a meaning that most closely tighs with the words in that text.
+# Comment: hours.txt was selected as the closest match. To get this result I did have to fiddle with the 
+# stop words because the model kept selected "your" as a token, then picking loyalty.txt, so I had to add 
+# "your" to the stop word list. Weekends.txt had the use of the word weekends which is why the model selected it.
 
 ## Keyword Question 2
 query = "Do you have anything without caffeine?"
@@ -142,7 +143,8 @@ print(response)
 # that is contigent on whether it rates "loyalty" and "rewards" as similar enough words.
 
 # Actual Reponse: I was completely correct. The AI didn't register "for" as one of it's query tokens and despite 
-# verbose = True it didn't find anything sufficiently similar enough.
+# verbose = True it didn't find anything sufficiently similar enough. To get the correct answer would require using 
+# the word "loralty" as opposed to "rewards."
 
 # ------- Semantic RAG Concepts ------- #
 ## Semantic Question 1
@@ -199,7 +201,7 @@ for q in questions:
 # The snippets received all appear to be relevent to the questions.
 
 ## LlamaIndex Question 2
-print("\nSimilarity Top K = 1")
+print("\nSimilarity Top K = 5")
 query_enginek1 = index.as_query_engine(similarity_top_k=5)
 for q in questions:
     print(f"\nQ: {q}")
@@ -212,7 +214,7 @@ for q in questions:
         print(f"Text Snippet: {node_with_score.node.get_content()[:100]}...")
         print("-" * 30)
 
-print("\nSimilarity Top K = 5")
+print("\nSimilarity Top K = 1")
 query_enginek5 = index.as_query_engine(similarity_top_k=1)
 for q in questions:
     print(f"\nQ: {q}")

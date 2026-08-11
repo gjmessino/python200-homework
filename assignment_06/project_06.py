@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from llama_index.llms.openai import OpenAI
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.core.evaluation import FaithfulnessEvaluator, RelevancyEvaluator
+import os
 from pathlib import Path
 
 ## Step 1: Setup
@@ -42,6 +43,7 @@ for q in questions:
     for node_with_score in response.source_nodes:
         print(f"Node ID: {node_with_score.node.node_id}")
         print(f"Similarity Score: {node_with_score.score:.4f}")
+        print(f"Document Name: {node_with_score.metadata.get('file_name')}")
         print(f"Text Snippet: {node_with_score.node.get_content()[:200]}...")
         print("-" * 30)
 
@@ -62,7 +64,8 @@ print(f'A: {response}')
 for node in response.source_nodes:
     print(f'Node ID: {node.node_id}')
     print(f"Similarity Score: {node.score:.4f}")
-    print(f"Test Snippet: {node.get_content()[:200]}...")
+    print(f"Document Name: {node.metadata.get('file_name')}")
+    print(f"Text Snippet: {node.get_content()[:200]}...")
     print("-" * 30)
 
 # Comment: I asked about what bakery they got their pastries from because I knew it wasn't in the source materials. 
@@ -83,10 +86,11 @@ for node in response.source_nodes:
     # docs = SimpleDirectoryReader(docs_dir).load_data()
     # index = VectorStoreIndex.from_documents(docs)
     # qe = index.as_query_engine(similarity_top_k=3)
+#  In comparison the simple_keyword_retrieval function from the warm up is 39 lines of code.
 # This demonstrates how LLamaIndex greatly simplifies the process of embedding, chunking etc. 
 # It shows how frameworks can do a lot of the heavy lifting with RAG, so the programmer (me) 
 # can spend more time on other parts of the project. Without a framework, the coding process 
-# can take much longer.
+# can take much longer. 
 
 # 2. This would add value in a lot of cases. In terms of business this could help customers of online retailers 
 # understand shipping, pricing, and policy easier. It could help banking customers understand their investments 
