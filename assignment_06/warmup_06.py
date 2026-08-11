@@ -191,7 +191,7 @@ for q in questions:
     for node_with_score in response.source_nodes:
         print(f"Node ID: {node_with_score.node.node_id}")
         print(f"Similarity Score: {node_with_score.score:.4f}")
-        print(f"Text Snippet: {node_with_score.node.get_content()[:100]}...")
+        print(f"Text Snippet: {node_with_score.node.get_content()[:150]}...")
         print("-" * 30)
 
 # Comment: For both questions the nodes pulled are relevent, particularly the top node pulls 
@@ -201,11 +201,11 @@ for q in questions:
 # The snippets received all appear to be relevent to the questions.
 
 ## LlamaIndex Question 2
-print("\nSimilarity Top K = 5")
-query_enginek1 = index.as_query_engine(similarity_top_k=5)
+print("\nSimilarity Top K = 1")
+query_enginek5 = index.as_query_engine(similarity_top_k=1)
 for q in questions:
     print(f"\nQ: {q}")
-    response = query_enginek1.query(q)
+    response = query_enginek5.query(q)
     print("A:", response)
     
     for node_with_score in response.source_nodes:
@@ -214,11 +214,11 @@ for q in questions:
         print(f"Text Snippet: {node_with_score.node.get_content()[:100]}...")
         print("-" * 30)
 
-print("\nSimilarity Top K = 1")
-query_enginek5 = index.as_query_engine(similarity_top_k=1)
+print("\nSimilarity Top K = 5")
+query_enginek1 = index.as_query_engine(similarity_top_k=5)
 for q in questions:
     print(f"\nQ: {q}")
-    response = query_enginek5.query(q)
+    response = query_enginek1.query(q)
     print("A:", response)
     
     for node_with_score in response.source_nodes:
