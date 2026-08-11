@@ -2,7 +2,6 @@ from dotenv import load_dotenv
 from llama_index.llms.openai import OpenAI
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.core.evaluation import FaithfulnessEvaluator, RelevancyEvaluator
-from llama_index.readers.file import PDFReader
 import os
 import string
 
