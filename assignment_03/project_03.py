@@ -113,7 +113,7 @@ for label in cats:
 x = df.drop('spam_label', axis=1)
 y = df['spam_label']
 x_train, x_test, y_train, y_test = train_test_split(
-    x, y, test_size=0.2, random_state = 42, stratify=y
+    x, y, test_size=0.1, random_state = 42, stratify=y
     )
 # stratify=y ensures both training and test sets maintain the same 
 # proportion of spam (1) vs. ham (0) as the original dataset.
@@ -226,10 +226,15 @@ print(f"Classification Report (PCA): {classification_report(y_test, logreg_pca_p
 # accuracy overall, problem because 
 # it was weighting certain data heavier 
 # than other. The Decision tree with a max 
-# iter of Non had an almost perfect 
-# accuracy score. Other testing fell in 
-# the middle with accuracy mostly in the 
-# low 90th percentile.
+# iter of None had an almost perfect 
+# accuracy score, but this was probably 
+# due to overfitting, so it theortically 
+# performed better on 5 or 10 iterations. 
+# Logistic regression on scaled data had 
+# the best non tree classification results.
+# Other testing fell in the middle with 
+# accuracy mostly in the low 90th percentile.
+
 
 top10_rf = importance_df_rf.nlargest(10, 'Importance')
 top10_tree = importance_df_tree.nlargest(10, 'Importance')
@@ -273,6 +278,14 @@ plt.close()
 # as spam) is far more costly to a user than a 
 # False Negative (letting a spam email slip 
 # into the inbox).
+
+# In the case of ham versus spam it is better to 
+# have false positives than false negatives. Users 
+# tend to prefer deleting spam that has slipped into 
+# their inbox, than miss important emails that accidently 
+# go to their spam folder. From the random forest confusion 
+# matrix we can see more spam ending up in ham than ham 
+# ending up in spam, which is the better outcome than the reverse.
 
 # --- Task 4: Cross-Validation --- #
 def get_cv(model, x, y, label):
@@ -319,7 +332,7 @@ tree_pred = tree_pipeline.predict(x_test)
 
 print(f"Classification Report (Tree): {classification_report(y_test, tree_pred)}")
 
-# The non-tree pipeline includes preprocessing steps (StandardScaler and PCA) 
+# The non-tree pipeline includes preprocessing steps (StandardScaler and Logistic regression) 
 # because distance- and gradient-based algorithms (like Logistic Regression and KNN) 
 # are sensitive to differing feature scales and high dimensionality. The tree pipeline 
 # contains only the classifier because Decision Trees and Random Forests split features 

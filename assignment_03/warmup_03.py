@@ -84,7 +84,7 @@ for k in k_values:
     knn = KNeighborsClassifier(n_neighbors=k)
     scores = cross_val_score(knn, x_train, y_train, cv=5)
     print(f"K: {k}")
-    print(f"CV: {scores.mean}")
+    print(f"CV: {scores.mean()}")
 # The best k value is 15 becuase it 
 # consistantly had the highest accuracy 
 # rate, and the fewest overfits.
@@ -126,12 +126,10 @@ for c in c_vals:
         )
     ovr_model = OneVsRestClassifier(estimator=model)
     ovr_model.fit(x_train_scaled, y_train)
-    print(ovr_model.estimators_)
+
+    total_coef = np.abs(ovr_model.coef_).sum()
     print(f"C Value: {c}")
-    total = 0
-    for est in ovr_model.estimators_:
-        total += np.abs(est.coef_).sum()
-    print(f"Total Coefficient: {total}")
+    print(f'Total Coefficient Magnitude: {total_coef:.4f}')
 
 # --- PCA --- #
 digits = load_digits()
