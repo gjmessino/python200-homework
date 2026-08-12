@@ -85,9 +85,9 @@ for k in k_values:
     scores = cross_val_score(knn, x_train, y_train, cv=5)
     print(f"K: {k}")
     print(f"CV: {scores.mean()}")
-# The best k value is 15 becuase it 
-# consistantly had the highest accuracy 
-# rate, and the fewest overfits.
+# The best k value is 5 and 7 given 
+# they both have a CV mean of .975, 
+# when k is lower or higher that number dips.
 
 # --- Classifier Evaluation Question 1 --- #
 cm = confusion_matrix(y_test, knn_predict)
