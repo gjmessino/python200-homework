@@ -38,7 +38,7 @@ response.raise_for_status()
 df = pd.DataFrame(response.json()["daily"])
 df["date"] = pd.to_datetime(df["time"])
 df = df.drop("time", axis=1)
-print(df.describe())
+df.info()
 
 ## --- Step 2: Engineer Labels --- ##
 def label_running_day(row):
@@ -53,6 +53,7 @@ df["good_for_running"] = df.apply(label_running_day, axis=1)
 
 print(df["good_for_running"].value_counts())
 print(f"\nFraction of good days: {df['good_for_running'].mean():.2f}")
+print(df.describe())
 # 61% of the days here (San Francisco) are good for 
 # running. It's a little lower than I expected given 
 # that it's never too hot or too cold, and rain is 
@@ -144,14 +145,14 @@ metadata = {
     "latitude": 37.7749,
     "longitude": -122.4194,
     "label_thresholds": {
-        "temperature_2m_max": "7–29°C",
+        "temperature_2m_max": "7–26°C",
         "temperature_2m_min": ">= 0°C",
         "precipitation_sum":  "< 3.0 mm",
         "wind_speed_10m_max": "< 30 km/h",
+        # Comment: Used the same label thresholds as above for consistency.
     },
 }
 
 with open('models/weather_classifier_metadata.json', 'w') as f:
     json.dump(metadata, f, indent=2)
-
 print("Model and metadata saved to models/")

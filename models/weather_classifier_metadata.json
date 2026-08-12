@@ -10,10 +10,12 @@
   "best_params": {
     "clf__C": 5
   },
-  "test_auc": 0.9627,
-  "trained_on": "2023 Open-Meteo, San Francisco CA (lat 37.7749, lon -122.4194)",
+  "test_auc": 0.913,
+  "city": "San Francisco, CA",
+  "latitude": 37.7749,
+  "longitude": -122.4194,
   "label_thresholds": {
-    "temperature_2m_max": "7\u201329\u00b0C",
+    "temperature_2m_max": "7\u201326\u00b0C",
     "temperature_2m_min": ">= 0\u00b0C",
     "precipitation_sum": "< 3.0 mm",
     "wind_speed_10m_max": "< 30 km/h"

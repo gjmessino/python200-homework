@@ -262,5 +262,5 @@ for i, sample in enumerate(new_samples, start=1):
 
 # I expected the all 0s row to predict 0, which is did. 
 # I was surprised by predict proba giving it decimal
-#  estimates as opposed to a 1 and 0, especially given 
+# estimates as opposed to a 1 and 0, especially given 
 # that the predict proba for other rows is integers.

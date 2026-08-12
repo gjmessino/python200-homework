@@ -31,7 +31,7 @@ probs = clf.predict_proba(new_days)[:,1]
 for i, row in new_days.iterrows():
     pred_label = "good" if predict[i] == 1 else "skip"
     prob = probs[i]
-
+    print(f'Probability: {prob}')
     features_str = (
         f"Max Temp: {row['temperature_2m_max']}°C, "
         f"Min Temp: {row['temperature_2m_min']}°C, "
@@ -53,7 +53,11 @@ for i, row in new_days.iterrows():
 # makes it easier to use in multiple 
 # circumstances. It also keeps the model 
 # acccurate to the training data so it 
-# can't be swayed by predictions.
+# can't be swayed by predictions. If we 
+# ran weather predict first the code would 
+# not work given that it uses a model build 
+# in train_weather_classifier, therefor there 
+# would be no model to predict with.
 
 # To accurately predict the next days weather 
 # the model would need to be looking at weather 
