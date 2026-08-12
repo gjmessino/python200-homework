@@ -182,18 +182,16 @@ for d in depth:
     print(f"Train Accuracy Score(Decision Tree): {accuracy_score(y_train, train_pred)}")
     print(f"Test Accuracy Score(Decision Tree): {accuracy_score(y_test, test_pred)}")
 
-    print(f"Feature Importance: {dtree.feature_importances_}")
+    # As max_depth increases, training accuracy keeps climbing toward ~1.0 -- the tree is
+    # memorizing individual training examples -- while test accuracy plateaus and the
+    # train/test gap widens. That growing gap is the signature of overfitting. I'm picking 
+    # 5 as the best choice because we see it's accuracy is around 90% for both tests, but 
+    # it's not so high as to be overfitting.
 
-
-    # Accuracy increases with max depth because there 
-    # is more data to work with. I would pick none as 
-    # the max depth given that for both the test and 
-    # train data it had the highest accuracy.
-
-dtree = DecisionTreeClassifier(max_depth = None, random_state = 42)
+dtree = DecisionTreeClassifier(max_depth = 5, random_state = 42)
 dtree.fit(x_train, y_train)
 dtree_predict = dtree.predict(x_test)
-print(f"Scaled Accuracy Score(KNN): {accuracy_score(y_test, dtree_predict)}")
+print(f"Scaled Accuracy Score(Best Decision Tree): {accuracy_score(y_test, dtree_predict)}")
 print(f"Classification Report: {classification_report(y_test, dtree_predict)}")
 
 importance_df_tree = pd.DataFrame({
@@ -204,7 +202,7 @@ rf = RandomForestClassifier(n_estimators=100, random_state=42)
 rf.fit(x_train, y_train)
 rf_pred = rf.predict(x_test)
 print(f"Important Features: {rf.feature_importances_}")
-print(f"Accuracy Score (Random FOrest): {accuracy_score(y_test, rf_pred):.4f}")
+print(f"Accuracy Score (Random Forest): {accuracy_score(y_test, rf_pred):.4f}")
 print(f"Classification Report: {classification_report(y_test, rf_pred)}")
 
 importance_df_rf = pd.DataFrame({
@@ -214,8 +212,8 @@ importance_df_rf = pd.DataFrame({
 logreg_scale = LogisticRegression(C=1.0, max_iter=1000, solver='liblinear')
 logreg_scale.fit(x_train_scaled, y_train)
 logreg_scale_pred = logreg_scale.predict(x_test_scaled)
-print(f"Accuracy (Scaled): {accuracy_score(y_test, logreg_scale_pred):.4f}")
-print(f"Classification Report (Scaled): {classification_report(y_test, logreg_scale_pred)}")
+print(f"Accuracy (Scaled Logsitic Regression): {accuracy_score(y_test, logreg_scale_pred):.4f}")
+print(f"Classification Report (Scaled Logsitic Regression): {classification_report(y_test, logreg_scale_pred)}")
 
 logreg_pca = LogisticRegression(C=1.0, max_iter=1000, solver='liblinear')
 logreg_pca.fit(X_train_pca, y_train)
@@ -236,6 +234,12 @@ print(f"Classification Report (PCA): {classification_report(y_test, logreg_pca_p
 top10_rf = importance_df_rf.nlargest(10, 'Importance')
 top10_tree = importance_df_tree.nlargest(10, 'Importance')
 
+print("Top 10 Features (Decision Tree):")
+print(top10_tree.to_string(index=False))
+
+print("Top 10 Features (Random Forest):")
+print(top10_rf.to_string(index=False))
+
 fig, [ax1, ax2] = plt.subplots(1,2, figsize=(14, 6))
 ax1.bar(top10_rf['Feature'], top10_rf['Importance'])
 ax1.set_title('Important Features (Random Forest)')
@@ -252,7 +256,7 @@ plt.show()
 
 ConfusionMatrixDisplay.from_estimator(rf, x_test, y_test, display_labels=['Ham', 'Spam'])
 plt.title('Best Model Confusion Matrix (Random Forest)')
-plt.savefig('outputs/best_model_confusion_matrix.png')
+plt.savefig('assignment_03/outputs/best_model_confusion_matrix.png')
 plt.show()
 plt.close()
 
@@ -300,7 +304,6 @@ get_cv(logreg_pca, X_train_pca, y_train, 'PCA Logistic Regression')
 # --- Task 5: Building a Prediction Pipeline --- #
 non_tree_pipeline = Pipeline([
     ("scaler", StandardScaler()),
-    ("pca", PCA(n_components=n)),  # 'n' calculated in Task 2
     ("classifier", LogisticRegression(C=1.0, max_iter=1000, solver='liblinear'))
 ])
 

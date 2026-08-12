@@ -8,6 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -83,7 +84,7 @@ for k in k_values:
     knn = KNeighborsClassifier(n_neighbors=k)
     scores = cross_val_score(knn, x_train, y_train, cv=5)
     print(f"K: {k}")
-    print(f"CV: {scores}")
+    print(f"CV: {scores.mean}")
 # The best k value is 15 becuase it 
 # consistantly had the highest accuracy 
 # rate, and the fewest overfits.
@@ -123,9 +124,14 @@ for c in c_vals:
         solver = 'liblinear',
         C = c
         )
-    model.fit(x_train_scaled, y_train)
+    ovr_model = OneVsRestClassifier(estimator=model)
+    ovr_model.fit(x_train_scaled, y_train)
+    print(ovr_model.estimators_)
     print(f"C Value: {c}")
-    print(f"Total Coefficient: {np.abs(model.coef_).sum()}")
+    total = 0
+    for est in ovr_model.estimators_:
+        total += np.abs(est.coef_).sum()
+    print(f"Total Coefficient: {total}")
 
 # --- PCA --- #
 digits = load_digits()
@@ -191,7 +197,6 @@ def reconstruct_digit(sample_idx, scores, pca, n_components):
     return reconstruction.reshape(8, 8)
 
 n_list = [2, 5, 15, 40]
-reconstruction = reconstruct_digit(X_digits[:4], scores, pca, n)
 
 fig, axes = plt.subplots(5,5, figsize=(10,10))
 
