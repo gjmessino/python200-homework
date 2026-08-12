@@ -80,8 +80,9 @@ pipe = Pipeline([
 ])
 
 param_grid = {
-    'clf__C' : [.1, .5, 0, 1, 5, 10]
+    'clf__C' : [.01, .1, .5, 1, 5, 10]
 }
+
 grid_search = GridSearchCV(
     estimator=pipe,
     param_grid=param_grid,
@@ -151,6 +152,12 @@ metadata = {
         "wind_speed_10m_max": "< 30 km/h",
         # Comment: Used the same label thresholds as above for consistency.
     },
+    "label_description": (
+        "A day is labeled 'good for running' when the high temperature is between "
+        "7-26°C (45-79°F), the low temperature stays at or above freezing (0°C), "
+        "total precipitation is under 3.0 mm, and max wind speed is under 30 km/h. "
+        "All four conditions must hold."
+    ),
 }
 
 with open('models/weather_classifier_metadata.json', 'w') as f:

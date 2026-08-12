@@ -4,8 +4,8 @@ import pandas as pd
 import sys
 
 ## --- Task 1: Load and Verify --- ##
-clf = joblib.load('models/weather_classifier.pkl')
 try:
+    clf = joblib.load('models/weather_classifier.pkl')
     with open('models/weather_classifier_metadata.json', 'r') as file:
         data = json.load(file)
 except FileNotFoundError as e:
@@ -19,10 +19,10 @@ print(f"Test AUC: {data['test_auc']}")
 
 ## --- Task 2: Predict on New Data --- ##
 new_days = pd.DataFrame({
-    "temperature_2m_max": [10, 50, 0, 15, 7], 
-    "temperature_2m_min": [10, 20, -5, 4, 0],
-    "precipitation_sum":  [1, 5, -8, 3, 1],
-    "wind_speed_10m_max": [2, 40, 25, 29, 29]
+    "temperature_2m_max": [20, 38, -2, 26, 15],
+    "temperature_2m_min": [12, 25, -10, 5, 3],
+    "precipitation_sum":  [0.0, 0.0, 12.0, 2.5, 3.0],
+    "wind_speed_10m_max": [10, 45, 20, 28, 29]
 })
 
 predict = clf.predict(new_days)
@@ -31,13 +31,14 @@ probs = clf.predict_proba(new_days)[:,1]
 for i, row in new_days.iterrows():
     pred_label = "good" if predict[i] == 1 else "skip"
     prob = probs[i]
-    print(f'Probability: {prob}')
     features_str = (
         f"Max Temp: {row['temperature_2m_max']}°C, "
         f"Min Temp: {row['temperature_2m_min']}°C, "
         f"Precip: {row['precipitation_sum']}mm, "
         f"Wind: {row['wind_speed_10m_max']}km/h"
     )
+    print(f"Day {i+1}: {features_str}")
+    print(f"Predicted: {pred_label} (confidence: {prob:.2%})")
 
 ## --- Task 3: Reflect --- ##
 

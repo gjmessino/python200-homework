@@ -74,10 +74,10 @@ fpr_lr, tpr_lr, thresholds_lr = roc_curve(y_test, log_probs)
 fpr_knn, tpr_knn, thresholds_knn = roc_curve(y_test, knn_probs)
 
 fig, ax = plt.subplots(figsize=(6, 5))
-RocCurveDisplay(fpr=fpr_lr, tpr=tpr_lr).plot(ax=ax, name = f'Logistic Regression (AUC Score: {lr_auc})')
+RocCurveDisplay(fpr=fpr_lr, tpr=tpr_lr).plot(ax=ax, name = f'Logistic Regression (AUC Score: {lr_auc:.3f})')
+RocCurveDisplay(fpr=fpr_knn, tpr=tpr_knn).plot(ax=ax, name=f'KNN (AUC Score: {knn_auc:.3f})')
 ax.plot([0, 1], [0, 1], linestyle="--", color="gray", label="Random classifier")
-ax.set_title("ROC Curve")
-RocCurveDisplay(fpr=fpr_knn, tpr=tpr_knn).plot(ax=ax, name=f'KNN (AUC Score: {knn_auc})')
+ax.set_title("ROC Curve Comparison — Logistic Regression vs. KNN")
 ax.legend()
 plt.tight_layout()
 plt.savefig('outputs/roc_comparison.png')
@@ -199,14 +199,22 @@ print(f"Best Max Depth: {grid_search2.best_params_['dtree__max_depth']}")
 print(f"Best AUC: {grid_search2.best_score_:.3f}")
 print(f"Test AUC (Tree): {dt_test_auc:.4f}")
 
-# The AUC for the Decision Tree is much 
-# higher than for Logistic Regression.
-# While AUC is important part of this 
-# difference may be attributed to using 
-# C versus max depth, given that C 
-# focuses on avoiding miscaluculations 
-# and max depth is about setting 
-# restrictions on data.
+# Comparing best AUCs: Logistic Regression's CV AUC was .7060 vs. the Decision
+# Tree's .935. The difference isn't really about C vs. max_depth as tuning knobs -- it's
+# about model capacity. Logistic Regression can only draw a linear (in the scaled
+# feature space) decision boundary, while a Decision Tree can carve out non-linear,
+# feature-interaction-based rules (e.g. "cold AND windy" as a single split path),
+# which fits this kind of threshold-based labeling rule more naturally.
+#
+# I would bring Decision Tree into further development, but AUC is not the only
+# thing I'd consider. A Decision Tree with max_depth=None can memorize the training
+# data and look artificially strong on this particular CV split while generalizing
+# worse on new data -- I'd want to check the train/test AUC gap, not just the best CV
+# score, before trusting it. Logistic Regression, meanwhile, is far easier to explain
+# to a non-technical stakeholder (a single coefficient per feature) and faster to
+# retrain, which matters if this model needs to run daily in production. So the
+# choice depends on whether raw predictive power or interpretability/stability
+# matters more for the deployment use case -- not just which AUC number is bigger.
 
 ## --- GridSearch Question 3 --- ##
 log_results = pd.DataFrame(grid_search1.cv_results_)
@@ -260,7 +268,12 @@ for i, sample in enumerate(new_samples, start=1):
     
     print(f"Row {i}: Predicted Class = {pred_class}, Probability (Class 1) = {pred_prob:.4f}")
 
-# I expected the all 0s row to predict 0, which is did. 
-# I was surprised by predict proba giving it decimal
-# estimates as opposed to a 1 and 0, especially given 
-# that the predict proba for other rows is integers.
+# All-zeros row: in a StandardScaler-based pipeline, 0 represents the *average*
+# value for each feature. So this row is a perfectly average case.
+# With every feature's contribution (coefficient x 0) dropping out, the predicted
+# probability here is essentially just the sigmoid of the model's intercept term --
+# it reflects the model's baseline tendency toward one class, which is shaped by
+# how balanced the training classes were, not by any specific feature evidence.
+# All predict_proba outputs are floats/probabilities, including the other two rows --
+# any that printed as 1.0000 or 0.0000 were just very confident, rounded predictions,
+# not a different return type.
