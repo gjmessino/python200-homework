@@ -246,17 +246,10 @@ print(top10_tree.to_string(index=False))
 print("Top 10 Features (Random Forest):")
 print(top10_rf.to_string(index=False))
 
-fig, [ax1, ax2] = plt.subplots(1,2, figsize=(14, 6))
-ax1.bar(top10_rf['Feature'], top10_rf['Importance'])
-ax1.set_title('Important Features (Random Forest)')
-ax1.set_xlabel('Features')
-
-ax2.bar(top10_tree['Feature'], top10_tree['Importance'])
-ax2.set_title('Important Features (Decision Tree)')
-ax2.set_xlabel('Features')
-
-plt.suptitle('Feature Important')
-plt.tight_layout()
+plt.figure()
+plt.bar(top10_rf['Feature'], top10_rf['Importance'])
+plt.title('Important Features (Random Forest)')
+plt.xlabel('Features')
 plt.savefig('assignment_03/outputs/feature_importances.png')
 plt.show()
 
