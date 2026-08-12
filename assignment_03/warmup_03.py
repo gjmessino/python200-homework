@@ -120,16 +120,16 @@ print(f"Classicifation Report: {classification_report(y_test, y_pred)}")
 c_vals = [0.01, 1, 100]
 for c in c_vals:
     model = LogisticRegression(
-        max_iter = 1000,
-        solver = 'liblinear',
-        C = c
-        )
+        max_iter=1000,
+        solver='liblinear',
+        C=c
+    )
     ovr_model = OneVsRestClassifier(estimator=model)
     ovr_model.fit(x_train_scaled, y_train)
 
-    total_coef = np.abs(ovr_model.coef_).sum()
+    total_coef = sum(np.abs(est.coef_).sum() for est in ovr_model.estimators_)
     print(f"C Value: {c}")
-    print(f'Total Coefficient Magnitude: {total_coef:.4f}')
+    print(f"Total Coefficient Magnitude: {total_coef:.4f}")
 
 # --- PCA --- #
 digits = load_digits()
@@ -201,14 +201,16 @@ fig, axes = plt.subplots(5,5, figsize=(10,10))
 for i in range(5):
     ax = axes[0,i]
     ax.imshow(images[i], cmap='gray_r')
-    ax.set_title(f'Image {i}')
+    ax.set_title(f'Image {i +1} (Original)')
 
 for row, n in enumerate(n_list, start=1):
+    i = 1
     for col in range(5):
         reconstructed_img = reconstruct_digit(col, scores, pca, n)
         ax = axes[row, col]
         ax.imshow(reconstructed_img, cmap='gray_r')
-        ax.set_title(f"n = {n}")
+        ax.set_title(f"Image {i} (n = {n})")
+        i+=1
 
 plt.suptitle('PCA Reconstruction')
 plt.tight_layout()

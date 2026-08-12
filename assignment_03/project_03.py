@@ -99,7 +99,6 @@ for label in cats:
     plt.boxplot([spam,ham], labels = ["Spam", "Not Spam"])
     plt.title(label)
     plt.ylabel('Frequency')
-    plt.legend()
     plt.savefig(f'assignment_03/outputs/{label}.png')
     plt.show()
 
@@ -179,7 +178,7 @@ for d in depth:
     test_pred = dtree.predict(x_test)
 
     print(f"Max Depth: {d}")
-    print(f"Train Accuracy Score(Decision Tree): {accuracy_score(y_train, train_pred)}")
+    print(f"Train Accuracy Score(Decision Tree depth = 5): {accuracy_score(y_train, train_pred)}")
     print(f"Test Accuracy Score(Decision Tree): {accuracy_score(y_test, test_pred)}")
 
     # As max_depth increases, training accuracy keeps climbing toward ~1.0 -- the tree is
@@ -191,7 +190,7 @@ for d in depth:
 dtree = DecisionTreeClassifier(max_depth = 5, random_state = 42)
 dtree.fit(x_train, y_train)
 dtree_predict = dtree.predict(x_test)
-print(f"Scaled Accuracy Score(Best Decision Tree): {accuracy_score(y_test, dtree_predict)}")
+print(f"Accuracy Score(Best Decision Tree): {accuracy_score(y_test, dtree_predict)}")
 print(f"Classification Report: {classification_report(y_test, dtree_predict)}")
 
 importance_df_tree = pd.DataFrame({
@@ -220,6 +219,8 @@ logreg_pca.fit(X_train_pca, y_train)
 logreg_pca_pred = logreg_pca.predict(X_test_pca)
 print(f"Accuracy (PCA): {accuracy_score(y_test, logreg_pca_pred):.4f}")
 print(f"Classification Report (PCA): {classification_report(y_test, logreg_pca_pred)}")
+
+print(f"Logistic Regression comparison -- Scaled: {accuracy_score(y_test, logreg_scale_pred):.4f} vs PCA-reduced: {accuracy_score(y_test, logreg_pca_pred):.4f}")
 # The scaled data had a marginally higher accuracy score (.9294 vs 0.9186 for PCA).
 
 # Unscaled KNN data had the lowest 
@@ -331,6 +332,9 @@ tree_pipeline.fit(x_train, y_train)
 tree_pred = tree_pipeline.predict(x_test)
 
 print(f"Classification Report (Tree): {classification_report(y_test, tree_pred)}")
+
+print(f"Pipeline test accuracy: {accuracy_score(y_test, non_tree_pred):.4f} (manual scaled LogReg was {accuracy_score(y_test, logreg_scale_pred):.4f})")
+print(f"Pipeline test accuracy: {accuracy_score(y_test, tree_pred):.4f} (manual Random Forest was {accuracy_score(y_test, rf_pred):.4f})")
 
 # The non-tree pipeline includes preprocessing steps (StandardScaler and Logistic regression) 
 # because distance- and gradient-based algorithms (like Logistic Regression and KNN) 
