@@ -32,7 +32,7 @@ tools = [
     'type': 'function',
     'function': {
         'name': 'celsius_to_fahrenheit',
-        'description': 'Converts a Celsius temperature to Fahrenheit',
+        'description': 'Converts a Celsius temperature to Fahrenheit through given equation',
         'parameters': {
             'type': 'object',
             'properties': {
@@ -86,7 +86,7 @@ def run_agent(user_prompt: str) -> str:
         tool_choice='auto'
     )
 
-    print("First Response received from model...")
+    print("\nFirst Response received from model...")
     print(first_response)
     first_message = first_response.choices[0].message
 
@@ -99,13 +99,14 @@ def run_agent(user_prompt: str) -> str:
     )
 
     if first_message.tool_calls:
-        print('Agentic mode engaged...')
+        print('\nAgentic mode engaged...')
         for tool_call in first_message.tool_calls:
             function_name = tool_call.function.name
             if function_name == 'get_current_time':
                 tool_result = get_current_time()
-            # elif function_name == 'celsius_to_fahrenheit':
-            #     tool_result = celsius_to_fahrenheit(tool_call.function.arguments)
+            elif function_name == 'celsius_to_fahrenheit':
+                 args = json.loads(tool_call.function.arguments)
+                 tool_result = celsius_to_fahrenheit(**args)
             else:
                 tool_result = f'Error: unknown tool {function_name}.'
 
@@ -136,27 +137,35 @@ def run_agent(user_prompt: str) -> str:
         return first_message.content or ''
 
 ## Prediction ##
-# With only get_current_time available, calling run_agent("Convert 100 degrees Celsius
-# to Fahrenheit") should NOT trigger a tool call -- get_current_time has nothing to do
-# with temperature conversion, so the model should just answer directly from its own
-# reasoning. That means 1 API call total (no second round-trip for a tool result).
+# The agent should be able to complete the request in one tool_call given that it is r
+# eadily availbable. The model should be able to automatically pick the correct function/tool.
 
 message = run_agent("Convert 100 degrees Celsius to Fahrenheit")
-print(message)
+print("\n", message)
+
+## Actual Response ##
+# The agent correctly called celsius to farenheit on its first try. 
+# It did a second tool call given that its already in the function, 
+# but the second call produced the first answer as the first and so 
+# was unnecessary.
 
 # ---------- Question 3 ---------- #
-response_a = run_agent("What is 37 degrees Celsius in Fahrenheit?")
+response_a = run_agent("\nWhat is 37 degrees Celsius in Fahrenheit?")
 print("Response A:", response_a)
 ## Comment ##
 # This should trigger a tool call to celsius_to_fahrenheit, since the model
 # now has a tool specifically built for this exact conversion and doesn't need to
 # approximate the arithmetic itself.
 
-response_b = run_agent("What is the boiling point of water in plain English?")
+# The agent correctly used the celsius_to_fahrenheit on the first attempt
+
+response_b = run_agent("\nWhat is the boiling point of water in plain English?")
 print("Response B:", response_b)
 ## Comment ##
 # This should NOT trigger a tool call -- neither tool answers a plain-English
 # factual question, so the model should just answer directly from its own knowledge.
+
+# The agent's response was "None" because it doesn't have access to that information.
 
 # ---- Setup ----#
 
@@ -338,16 +347,15 @@ class CsvManager:
         Returns the correlation coefficient and p-value.
         """
         # your code here
-        missing = [c for c in (col1, col2) if c not in self.df.columns]
-        if missing:
-            return {"error": f"These columns are not in the data: {missing}"}
-
-        coeff, pval = stats.pearsonr(self.df[col1], self.df[col2])
-        return_dict = {"col1": col1,
-                    "col2": col2,
-                    "pearson_r": coeff,
-                    "p_value": pval}
-        return return_dict
+        if col1 and col2:
+            coeff, pval = stats.pearsonr(self.df[col1], self.df[col2])
+            return_dict = {"col1": col1,
+                        "col2": col2,
+                        "pearson_r": coeff,
+                        "p_value": pval}
+            return return_dict
+        else:
+            return {"error": f"These columns are not in the data"}
 
 print("Class defined")
 csv_manager = CsvManager(resources_dir=RESOURCES_DIR)
@@ -566,16 +574,18 @@ print(json.dumps(messages, indent=2, default=str))
 
 # ---------- Question 7 ---------- #
 @tool
-def compute_correlation() -> dict:
+def compute_correlation(col1,col2) -> dict:
         """
             Compute the Pearson correlation between two columns in the loaded DataFrame.
             Returns the correlation coefficient and p-value.
 
-            Args: two columns from bike_commute.csv 
+            Args: 
+                col1: a column of information selected from a dataframe
+                col2: a second column of information selected from a dataframe
 
             Returns: a dictionary containing r value for correlation, p value and both columns
         """
-        return csv_manager.compute_correlation()
+        return csv_manager.compute_correlation(col1,col2)
 
 print(compute_correlation.description)
 
@@ -721,3 +731,6 @@ prompt = "Load bike_commute.csv. Plot avg_heart_rate vs duration_min as a scatte
 
 response_tool = tool_agent.run(prompt)
 response_code = code_agent.run(prompt, additional_args={"csv_manager": csv_manager})
+
+print(f"/nResponse Tool: {response_tool}")
+print(f"Response Code: {response_code}")

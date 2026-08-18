@@ -1,19 +1,20 @@
+from dotenv import load_dotenv
 import os
 import pandas as pd
+from pathlib import Path
 from scipy import stats
 from smolagents import ToolCallingAgent, OpenAIServerModel, tool
 from smolagents import CodeAgent
 
-# if load_dotenv():
-#     print("Successfully loaded environment variables from .env")
-# else:
-#     print("Warning: could not load environment variables from .env")
+if load_dotenv():
+    print("Successfully loaded environment variables from .env")
+else:
+    print("Warning: could not load environment variables from .env")
 api_key = os.getenv("OPENAI_API_KEY")
 
-# RESOURCES_DIR = Path("resources")
-
 # ---------- Pre-task: Load the Data ---------- #
-DATA_PATH = "assignments_01/outputs/merged_happiness.csv"
+DATA_PATH = Path("assignments_01/outputs/merged_happiness.csv")
+RESOURCES_DIR = Path("resources")
 
 # ---------- Task 1: Define Your Tools ---------- #
 df = None
@@ -25,11 +26,14 @@ def load_happiness_data() -> dict:
 
     Returns: dictionary containing the shape and columns from the datafram
     """
-    my_df = pd.load_csv('assignments_01/outputs/merged_happiness.csv')
-    my_dict = {'shape': df.shape(),
-               'columns': df.columns()}
-    df = df.concat(my_df, ignore_index = True)
-    return my_dict
+    global df
+    if not DATA_PATH.exists():
+        print('error: Could not find file in resources/.')
+        return {'error': 'Could not find file in resources/.'}
+    else:
+        df = pd.read_csv(DATA_PATH)
+    return {"shape": df.shape,
+            "column": df.columns}
 
 #Tool 2: summarize_column
 @tool
@@ -44,9 +48,11 @@ def summarize_column(column: str) -> dict:
     Returns:
         A dict of summary statistics (from pandas.describe), or an error dict.
     """
-    if column is None:
-        return {'error': 'Column not found'}
-    df[column].describe().to_dict()
+    if df is None:
+        return {"error": "No data loaded. Call load_happiness_data first."}
+    if column not in df.columns:
+        return {"error": f"Column '{column}' not found."}
+    return df[column].describe().to_dict()
 
 #Tool 3: compute_correlation
 @tool
@@ -61,9 +67,12 @@ def compute_correlation(col1: str, col2: str) -> dict:
 
             Returns: a dictionary containing r value for correlation, p value and both columns round decimal to 4 digits
         """
-        if col1 == None or col2 == None:
+        if df is None:
             return {'error': 'Column not found'}
-        r, pval = stats.pearsonr(col1,col2)
+        missing = [c for c in (col1, col2) if c not in df.columns]
+        if missing:
+            return {"error": f"These columns are not in the data: {missing}"}
+        r, pval = stats.pearsonr(df[col1],df[col2])
         my_dict = {"col1": col1,
                     "col2": col2,
                     "pearson_r": r,
@@ -79,10 +88,13 @@ def get_top_n_countries(column: str, year: int, n: int = 5) -> dict:
 
     Returns: a dictionary of the top rows based on the column and year given
     """
-    if year == None or column == None:
+    if df is None:
+        return {'error': 'Dataframe does not exist'}
+    if column not in df.columns:
         return {'error': 'Column not found'}
-    sorted_df = df[df['year'] == 2026].sort_values(by='column', ascending=False)
-    return sorted_df.head(n)
+    sorted_df = df[df['year'] == year].sort_values(by='column', ascending=False).head(n)
+    country_col = "Country" if "Country" in df.columns else "country"
+    return sorted_df[[country_col, column]].rename(columns={country_col: "country"}).to_dict("records")
 
 # ---------- Task 2: Build the Agent ---------- #
 model = OpenAIServerModel(api_key=api_key, model_id="gpt-4o-mini")
@@ -104,35 +116,35 @@ agent = CodeAgent(
 )
 
 # ---------- Task 3: Run Guided Queries ---------- #
-queries = [
-    "Load the happiness data and tell me its shape and column names.",
-    "Summarize the happiness_score column.",
-    "What is the correlation between gdp_per_capita and happiness_score? Is it statistically significant?",
-    "Show me the top 5 happiest countries in 2020.",
-    "Plot happiness_score over the years as a line chart, with one line per region. Save the plot to outputs/happiness_by_region.png.",
-]
+def main():
+    queries = [
+        "Load the happiness data and tell me its shape and column names.",
+        "Summarize the happiness_score column.",
+        "What is the correlation between gdp_per_capita and happiness_score? Is it statistically significant?",
+        "Show me the top 5 happiest countries in 2020.",
+        "Plot happiness_score over the years as a line chart, with one line per region. Save the plot to outputs/happiness_by_region.png.",
+    ]
 
-for query in queries:
-    print(f"\n--- Query: {query} ---")
-    response = agent.run(query, reset=False)
-    print(response)
+    for query in queries:
+        print(f"\n--- Query: {query} ---")
+        response = agent.run(query, reset=False)
+        print(response)
 
-# ---------- Task 4: Your Own Questions ---------- #
-# My query 1
-my_query_1 = "What's the corelation on Happiness score and Perceptions of corruption"   
-response_1 = agent.run(my_query_1, reset=False)
-print(response_1)
-# Comment: Did this trigger tool use, code generation, or both?
+    # ---------- Task 4: Your Own Questions ---------- #
+    # My query 1
+    my_query_1 = "What's the corelation on Happiness score and Perceptions of corruption"   
+    response_1 = agent.run(my_query_1, reset=False)
+    print(response_1)
+    # Comment: Did this trigger tool use, code generation, or both?
 
-# My query 2
-my_query_2 = "Is happiness trending upward over time"  
-response_2 = agent.run(my_query_2, reset=False)
-print(response_2)
-# Comment: Did this trigger tool use, code generation, or both?
+    # My query 2
+    my_query_2 = "Is happiness trending upward over time"  
+    response_2 = agent.run(my_query_2, reset=False)
+    print(response_2)
+    # Comment: Did this trigger tool use, code generation, or both?
 
 # ---------- Task 5: Reflection ---------- #
 
 
-# if __name__ == "__main__":
-#     # Task 3 queries
-#     # Task 4 queries
+if __name__ == "__main__":
+   main()
