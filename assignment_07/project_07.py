@@ -13,7 +13,7 @@ else:
 api_key = os.getenv("OPENAI_API_KEY")
 
 # ---------- Pre-task: Load the Data ---------- #
-DATA_PATH = Path("assignments_01/outputs/merged_happiness.csv")
+DATA_PATH = Path("../assignments_01/outputs/merged_happiness.csv")
 RESOURCES_DIR = Path("resources")
 
 # ---------- Task 1: Define Your Tools ---------- #
@@ -24,7 +24,10 @@ df = None
 def load_happiness_data() -> dict:
     """Load the World Happiness dataset into memory. Look specifically at merged_happiness.csv defined in DATA_PATH
 
-    Returns: dictionary containing the shape and columns from the datafram
+    Returns: A dict with two keys: "shape" (a tuple of row and column counts) and
+        "columns" (a list of column name strings). This is a summary dict, not
+        the DataFrame itself -- access values with happiness_data["shape"], not
+        happiness_data.shape.
     """
     global df
     if not DATA_PATH.exists():
@@ -32,8 +35,8 @@ def load_happiness_data() -> dict:
         return {'error': 'Could not find file in resources/.'}
     else:
         df = pd.read_csv(DATA_PATH)
-    return {"shape": df.shape,
-            "column": df.columns}
+    return {"Shape": df.shape,
+            "Column": df.columns}
 
 #Tool 2: summarize_column
 @tool
@@ -59,40 +62,51 @@ def summarize_column(column: str) -> dict:
 def compute_correlation(col1: str, col2: str) -> dict:
         """
             Compute the Pearson correlation between two columns in the loaded DataFrame.
-            Returns the correlation coefficient and p-value.
 
-            Args: 
-                  col1: a column given to the code origination from the df
-                  col2: a separate column given to the code origination from the df
+            Args:
+                col1: The first column name.
+                col2: The second column name.
 
-            Returns: a dictionary containing r value for correlation, p value and both columns round decimal to 4 digits
+            Returns:
+                A dictionary containing col1, col2, pearson_r, and p_value, each rounded
+                to 4 decimal places.
+                
         """
         if df is None:
             return {'error': 'Column not found'}
         missing = [c for c in (col1, col2) if c not in df.columns]
         if missing:
             return {"error": f"These columns are not in the data: {missing}"}
-        r, pval = stats.pearsonr(df[col1],df[col2])
+        clean = df[[col1, col2]].dropna()
+        if clean.empty:
+            return {"error": f"No overlapping non-missing data between '{col1}' and '{col2}'."}
+        r, pval = stats.pearsonr(clean[col1],clean[col2])
         my_dict = {"col1": col1,
                     "col2": col2,
-                    "pearson_r": r,
-                    "p_value": pval}
+                    "pearson_r": round(r, 4),
+                    "p_value": round(pval, 4),
+                    }
         return my_dict
 
 #Tool 4: get_top_n_countries
 @tool
 def get_top_n_countries(column: str, year: int, n: int = 5) -> dict:
     """Return the top N countries ranked by a given column for a specific year.
-    
-    Args: a specified column, a specified year, and an integer of how many rows should be seelcted (if not given n=5)
 
-    Returns: a dictionary of the top rows based on the column and year given
+    Args:
+        column: The column to rank countries by.
+        year: The year to filter the data on.
+        n: The number of top rows to return. Defaults to 5.
+
+    Returns:
+        A list of dicts, each with "country" and the requested column's value,
+        or an error dict on bad input.
     """
     if df is None:
         return {'error': 'Dataframe does not exist'}
     if column not in df.columns:
         return {'error': 'Column not found'}
-    sorted_df = df[df['year'] == year].sort_values(by='column', ascending=False).head(n)
+    sorted_df = df[df['year'] == year].sort_values(by=column, ascending=False).head(n)
     country_col = "Country" if "Country" in df.columns else "country"
     return sorted_df[[country_col, column]].rename(columns={country_col: "country"}).to_dict("records")
 
@@ -144,7 +158,25 @@ def main():
     # Comment: Did this trigger tool use, code generation, or both?
 
 # ---------- Task 5: Reflection ---------- #
+# 1. It listed the correlation coefficient as 0.622, p value as 0.0, and decided that was a 
+# significant amount. The agent didn't explain why it was significant, but the p value is under 
+# 5% (anything under 5% is significant) and indicates the program may have rounded off a tiny number 
+# to 0. The r value (which was also probably rounded) shows a strong positive connection between 
+# the two datasets. The numbers are in line with determining this to be a significant correlation.
 
+# 2. The agent struggled deeply with graphs, which isn't surprising given that wasn't a tool that 
+# was coded in beforehand. Happiness_trend_over_time.png is a blank graph with labels. 
+# happiness_by_region.png has one line, but the legend is cut off so I'm not sure what it's 
+# referencing, and there are two other random dots. The agent did get the graph for happiness over 
+# time correct, and by 'correct' I mean it created a readable graph, but I'm not sure if anything 
+# on it is correct. I expected this to be a little bit bad, but it was worse than expected.
+
+# 3. Considering my comment above, a graphing tool would be very helpful. Some other tools that
+#  would be helpful additions would include: expanding the loading tool to include data cleaning, 
+# becuase the system really struggled with NaN values; a tool for relating multiple columns 
+# (ie more than two), which could be implemented for looking at how multiple characteristics shape 
+# happiness; or creating a tool than can make predictions through a chosen method 
+# (logistic regression/ knn/ decision tree ect) that can be used to predict future trends in happiness.
 
 if __name__ == "__main__":
    main()
