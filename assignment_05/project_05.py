@@ -18,7 +18,8 @@ def get_completion(messages, model="gpt-4o-mini", temperature=0.7):
 
 YOUR_SYSTEM_PROMPT = """
                     You are a career coach who focuses on the tech industry, specifically jobs in software engineering.
-                    You are helping candidates who are new to the tech world and need help tailoring a variety of professional experience to tech jobs.
+                    You are helping candidates who are new to the tech world and need help tailoring a variety of professional experience to tech jobs. 
+                    You might not know everything about this industry so make sure the user is aware of your limitations.
                     Focus on application materials (ex. cover letters and resumes), and provide feedback to make candidates as successful as possible.
                     Always remind the user to review and edit the output before submitting.
                     """
@@ -191,6 +192,7 @@ def run_chatbot():
             job_title = input("Job Application Helper: What is the job title? ").strip()
             background = input("Job Application Helper: Briefly describe your background: ").strip()
             # YOUR CODE: call generate_cover_letter() and print the result
+            messages.append({"role": "user", "content": user_input})
             cover = generate_cover_letter(job_title, background)
             print(f"New Cover Letter: {cover}")
             messages.append({"role": "assistant", "content": cover})
