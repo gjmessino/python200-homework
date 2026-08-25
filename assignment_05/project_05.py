@@ -208,7 +208,7 @@ def run_chatbot():
             reply = get_completion(messages)
             print(f"Sys: {reply}")
             messages.append({"role": "assistant", "content": reply})
-            pass
+            
 
 if __name__ == "__main__":
     run_chatbot()
