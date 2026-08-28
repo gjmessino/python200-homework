@@ -34,7 +34,7 @@ def load_happiness_data() -> dict:
         num = 2015
         results = []
         for i in range(10):
-            happiness_file = f'happiness_project/world_happiness_{num}.csv'
+            happiness_file = f'.../assignments_01/happiness_project/world_happiness_{num}.csv'
             df = pd.read_csv(happiness_file, sep=';', decimal=',')
             df['year'] = num
             if num == 24:
@@ -44,12 +44,14 @@ def load_happiness_data() -> dict:
         df = pd.concat(results, ignore_index=True)
         df.to_csv("assignments_01/outputs/merged_happiness.csv")
         return {"shape": df.shape,
-                "columns": df.columns}
+                "columns": list(df.columns)}
     else:
-        df = pd.read_csv(DATA_PATH)
-    return {"shape": df.shape,
-            "columns": df.columns}
-
+        try: 
+            df = pd.read_csv(DATA_PATH)
+            return {"shape": df.shape,
+                    "columns": list(df.columns)}
+        except:
+            print('An error has occured')
 
 #Tool 2: summarize_column
 @tool
