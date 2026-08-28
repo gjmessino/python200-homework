@@ -22,21 +22,37 @@ df = None
 #Tool 1: load_happiness_data
 @tool
 def load_happiness_data() -> dict:
-    """Load the World Happiness dataset into memory. Look specifically at merged_happiness.csv defined in DATA_PATH
+    try: 
+        """Load the World Happiness dataset into memory. Look specifically at merged_happiness.csv defined in DATA_PATH
 
-    Returns: A dict with two keys: "shape" (a tuple of row and column counts) and
-        "columns" (a list of column name strings). This is a summary dict, not
-        the DataFrame itself -- access values with happiness_data["shape"], not
-        happiness_data.shape.
-    """
-    global df
-    if not DATA_PATH.exists():
-        print('error: Could not find file in resources/.')
-        return {'error': 'Could not find file in resources/.'}
-    else:
-        df = pd.read_csv(DATA_PATH)
-    return {"Shape": df.shape,
-            "Column": df.columns}
+        Returns: A dict with two keys: "shape" (a tuple of row and column counts) and
+            "columns" (a list of column name strings). This is a summary dict, not
+            the DataFrame itself -- access values with happiness_data["shape"], not
+            happiness_data.shape.
+        """
+        global df
+        if not DATA_PATH.exists():
+            print('error: Could not find file in resources/.')
+            return {'error': 'Could not find file in resources/.'}
+        else:
+            df = pd.read_csv(DATA_PATH)
+        return {"Shape": df.shape,
+                "Column": df.columns}
+    except:
+        num = 2015
+        results = []
+        for i in range(10):
+            happiness_file = f'happiness_project/world_happiness_{num}.csv'
+            df = pd.read_csv(happiness_file, sep=';', decimal=',')
+            df['year'] = num
+            if num == 24:
+                df = df.rename(columns = {"Ladder score": "Happiness score"})
+            results.append(df)
+            num+=1
+        df = pd.concat(results, ignore_index=True)
+        df.to_csv("assignments_01/outputs/merged_happiness.csv")
+        return {"Shape": df.shape,
+                "Column": df.columns}
 
 #Tool 2: summarize_column
 @tool

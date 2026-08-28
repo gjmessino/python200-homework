@@ -347,14 +347,15 @@ class CsvManager:
         Returns the correlation coefficient and p-value.
         """
         # your code here
-        if col1 and col2:
-            coeff, pval = stats.pearsonr(self.df[col1], self.df[col2])
-            return_dict = {"col1": col1,
-                        "col2": col2,
-                        "pearson_r": coeff,
-                        "p_value": pval}
-            return return_dict
-        else:
+        try:
+            if col1 and col2:
+                coeff, pval = stats.pearsonr(self.df[col1], self.df[col2])
+                return_dict = {"col1": col1,
+                            "col2": col2,
+                            "pearson_r": coeff,
+                            "p_value": pval}
+                return return_dict
+        except:
             return {"error": f"These columns are not in the data"}
 
 print("Class defined")
@@ -570,18 +571,21 @@ print(result)
 # user: The user is me, or for more complex codes, whoever is using the model. The user is the human feeding prompts to the agent
 # assistant: Assistant is the role the system takes on after it's been given the system prompt. Once the user has told the system it is an assistant, it is redefined as such
 # tool: This is whatever tool was called to complete the request from the prompt. In this instance it is what is in node_tools. This role explains what action is being performed by the tools
+print("q6")
 print(json.dumps(messages, indent=2, default=str))
 
 # ---------- Question 7 ---------- #
 @tool
 def compute_correlation(col1,col2) -> dict:
         """
-            Compute the Pearson correlation between two columns in the loaded DataFrame.
+            Load two columns on integers that are given.
+            Compute the Pearson correlation between two columns.
             Returns the correlation coefficient and p-value.
 
             Args: 
-                col1: a column of information selected from a dataframe
-                col2: a second column of information selected from a dataframe
+
+                col1: a column of integers selected from a dataframe
+                col2: a second column of integers selected from a dataframe
 
             Returns: a dictionary containing r value for correlation, p value and both columns
         """
@@ -732,5 +736,5 @@ prompt = "Load bike_commute.csv. Plot avg_heart_rate vs duration_min as a scatte
 response_tool = tool_agent.run(prompt)
 response_code = code_agent.run(prompt, additional_args={"csv_manager": csv_manager})
 
-print(f"/nResponse Tool: {response_tool}")
+print(f"\nResponse Tool: {response_tool}")
 print(f"Response Code: {response_code}")
