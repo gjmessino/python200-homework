@@ -131,10 +131,10 @@ def run_agent(user_prompt: str) -> str:
 
             final_message = second_response.choices[0].message
             return final_message.content or ''
-        else:
-            print("No tools needed....")
+    else:
+        print("No tools needed....")
 
-        return first_message.content or ''
+    return first_message.content or ''
 
 ## Prediction ##
 # The agent should be able to complete the request in one tool_call given that it is r
@@ -448,6 +448,7 @@ def run_agent_cycle(messages, user_text, max_tool_rounds=5):
 
     return "I hit the tool-round limit. Try a simpler request."
 
+print("\n question 4 results")
 resources_dir = Path("resources")  # adjust to wherever your CSVs actually live
 csv_backend = CsvManager(resources_dir)
 
@@ -567,30 +568,29 @@ print(result)
 
 # ---------- Question 6 ---------- #
 ## Comment##
-# system: This describes the agentic as it initially exists. This is the basic system of the code or os that has yet to be trained
+# system: This is the persona of the AI model given to it through the prompt. 
 # user: The user is me, or for more complex codes, whoever is using the model. The user is the human feeding prompts to the agent
-# assistant: Assistant is the role the system takes on after it's been given the system prompt. Once the user has told the system it is an assistant, it is redefined as such
+# assistant: Similar to the system role, the assistant handles processing, logic, and the actual functionality of the model. 
 # tool: This is whatever tool was called to complete the request from the prompt. In this instance it is what is in node_tools. This role explains what action is being performed by the tools
-print("q6")
 print(json.dumps(messages, indent=2, default=str))
 
 # ---------- Question 7 ---------- #
 @tool
-def compute_correlation(col1,col2) -> dict:
-        """
-            Load two columns on integers that are given.
-            Compute the Pearson correlation between two columns.
-            Returns the correlation coefficient and p-value.
+def compute_correlation(col1:str,col2:str) -> dict:
+    """
+    Load two columns of integers that based on names given from bike_commute.csv.
+    Compute the Pearson correlation between two columns.
 
-            Args: 
+    Args:
+        col1: a column of integers selected from a dataframe
+        col2: a second column of integers selected from a dataframe
 
-                col1: a column of integers selected from a dataframe
-                col2: a second column of integers selected from a dataframe
+    Returns: 
+        a dictionary containing col1, col2, r, pval for keys, and the two columns, r value and pvalue for values
+    """
 
-            Returns: a dictionary containing r value for correlation, p value and both columns
-        """
-        return csv_manager.compute_correlation(col1,col2)
-
+    return csv_manager.compute_correlation(col1,col2)
+print("\n question 7 results")
 print(compute_correlation.description)
 
 ## Comment ##
@@ -599,7 +599,9 @@ print(compute_correlation.description)
 # In this block we set up a link to the original compute_correlation code so the agentic 
 # can use it as a tool first before it tries to make it's own code. This also means we don't 
 # have to write JSON schema's for all the tools, because smolagents already defines tools 
-# in its wrapper.
+# in its wrapper. Compared to Q4, Q7 requires more description for the model to follow, but the 
+# larger description means less coding overall. 
+
 
 # ---------- Question 8 ---------- #
 @tool
@@ -738,3 +740,27 @@ response_code = code_agent.run(prompt, additional_args={"csv_manager": csv_manag
 
 print(f"\nResponse Tool: {response_tool}")
 print(f"Response Code: {response_code}")
+
+##Comment##
+# The tool_agent was unable to make a scatter plot with green dots, so it defaulted to blue. Strangely the 
+# response message says "Response Tool: The scatter plot of avg_heart_rate vs duration_min has been successfully 
+# created with green dots," but that's not what happened. It also didn't save the plot as a PNG. However, the code 
+# agent was able to do both given that it had more flexibility, given that it didn't have to stick to only the tool 
+# calls.
+
+# This demonstrates how code_agents can be more useful through their lack of restrictions. They can take of tasks 
+# that aren't explicity stated in there code and complete them. However, this can also make code agents less reliable 
+# as prompts get more complicated.
+
+# ---------- Question 9 ---------- #
+# 1. The tool agent is better for tasks that are explicitly defined within the code. For example, when trying to 
+# compute pearson r value, the tool agent will always use the same steps every time, so you always get a result 
+# that aligns with existing code. The code agent, though it is supposed to use existing tools first, could potential 
+# make its own code that could return similar but incorrect values. The Code Agent is best used to tasks not explicitly 
+# lined out in the code already.
+
+# 2. Code agent could generate code that is incorrect. If I asked it to tell me what each column means it might not use
+# the summarize_column function and instead come up with it's own interpretation, so instead of returning count, mean, 
+# std, etc. it could return other desciptors, like a string explaining in plain english what the column does. While in 
+# this example users would still technically get a correct answer, the ability to generate it's own code means the Code 
+# Agent is at higher risk of hallucinating.

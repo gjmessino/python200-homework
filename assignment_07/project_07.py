@@ -22,23 +22,15 @@ df = None
 #Tool 1: load_happiness_data
 @tool
 def load_happiness_data() -> dict:
-    try: 
-        """Load the World Happiness dataset into memory. Look specifically at merged_happiness.csv defined in DATA_PATH
+    """Load the World Happiness dataset into memory. Look specifically at merged_happiness.csv defined in DATA_PATH
 
-        Returns: A dict with two keys: "shape" (a tuple of row and column counts) and
-            "columns" (a list of column name strings). This is a summary dict, not
-            the DataFrame itself -- access values with happiness_data["shape"], not
-            happiness_data.shape.
-        """
-        global df
-        if not DATA_PATH.exists():
-            print('error: Could not find file in resources/.')
-            return {'error': 'Could not find file in resources/.'}
-        else:
-            df = pd.read_csv(DATA_PATH)
-        return {"Shape": df.shape,
-                "Column": df.columns}
-    except:
+    Returns: A dict with two keys: "shape" (a tuple of row and column counts) and
+        "columns" (a list of column name strings). This is a summary dict, not
+        the DataFrame itself -- access values with happiness_data["shape"], not
+        happiness_data.shape.
+    """
+    global df
+    if not DATA_PATH.exists():
         num = 2015
         results = []
         for i in range(10):
@@ -51,8 +43,13 @@ def load_happiness_data() -> dict:
             num+=1
         df = pd.concat(results, ignore_index=True)
         df.to_csv("assignments_01/outputs/merged_happiness.csv")
-        return {"Shape": df.shape,
-                "Column": df.columns}
+        return {"shape": df.shape,
+                "columns": df.columns}
+    else:
+        df = pd.read_csv(DATA_PATH)
+    return {"shape": df.shape,
+            "columns": df.columns}
+
 
 #Tool 2: summarize_column
 @tool
@@ -76,33 +73,33 @@ def summarize_column(column: str) -> dict:
 #Tool 3: compute_correlation
 @tool
 def compute_correlation(col1: str, col2: str) -> dict:
-        """
-            Compute the Pearson correlation between two columns in the loaded DataFrame.
+    """
+    Compute the Pearson correlation between two columns in the loaded DataFrame.
 
-            Args:
-                col1: The first column name.
-                col2: The second column name.
+        Args:
+            col1: The first column name.
+            col2: The second column name.
 
-            Returns:
-                A dictionary containing col1, col2, pearson_r, and p_value, each rounded
-                to 4 decimal places.
+        Returns:
+            A dictionary containing col1, col2, pearson_r, and p_value, each rounded
+            to 4 decimal places.
                 
-        """
-        if df is None:
-            return {'error': 'Column not found'}
-        missing = [c for c in (col1, col2) if c not in df.columns]
-        if missing:
-            return {"error": f"These columns are not in the data: {missing}"}
-        clean = df[[col1, col2]].dropna()
-        if clean.empty:
-            return {"error": f"No overlapping non-missing data between '{col1}' and '{col2}'."}
-        r, pval = stats.pearsonr(clean[col1],clean[col2])
-        my_dict = {"col1": col1,
-                    "col2": col2,
-                    "pearson_r": round(r, 4),
-                    "p_value": round(pval, 4),
-                    }
-        return my_dict
+    """
+    if df is None:
+        return {'error': 'Column not found'}
+    missing = [c for c in (col1, col2) if c not in df.columns]
+    if missing:
+        return {"error": f"These columns are not in the data: {missing}"}
+    clean = df[[col1, col2]].dropna()
+    if clean.empty:
+        return {"error": f"No overlapping non-missing data between '{col1}' and '{col2}'."}
+    r, pval = stats.pearsonr(clean[col1],clean[col2])
+    my_dict = {"col1": col1,
+               "col2": col2,
+               "pearson_r": round(r, 4),
+               "p_value": round(pval, 4),
+                }
+    return my_dict
 
 #Tool 4: get_top_n_countries
 @tool
