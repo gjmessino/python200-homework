@@ -14,3 +14,6 @@ I was surprised by how cheap the total price was for Scenario A. I expected 160 
 Notably these prices are strick to Amazon, and even within there, there is some wiggle room. There were at least 9 options for RDS depending on the exact needs of the user. I used Amazon RDS Custom for Oracle given that it was the top choice, but selecting other options would change the price, and potentially limit (or expand) capabilities. 
 
 This shows that GPU servers in the P family are the most expensive, but are also made for building and training large data sets. Whereas, other servers maintain small sets of data and don't offer equivilant training systems, aiming instead to focus on storage.
+
+----- Video Link -----
+https://canva.link/f5b23vekg9e4hgw
