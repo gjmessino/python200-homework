@@ -1,5 +1,6 @@
-import os
+from datetime import date
 from dotenv import load_dotenv
+import os
 from supabase import create_client
 
 # ----- Supabase Connection ----- #
@@ -15,12 +16,15 @@ from supabase import create_client
 
 
 ## Connection Question 2 ##
-load_dotenv()
-supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-
 def get_client():
-    response = supabase.table("connection_test").select("*").execute()
-    print(response.data)
+    load_dotenv()
+    try:
+        supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+        response = supabase.table("connection_test").select("*").execute()
+        print(response.data)
+        return supabase
+    except Exception as e:
+        print("An error has occured:", e)
 
 ## Connection Question 3 ##
 # For this coure we disabled RLS so that we wouldn't have to deal with access policies or other 
@@ -36,7 +40,7 @@ def get_client():
 ## CRUD Question 1 ##
 def insert_test_record(supabase):
     record = {
-        "date": "2026-08-31",
+        "date": date.today(),
         "temperature_2m_max": 18.9,
         "temperature_2m_min": 14.4,
         "precipitation_sum":  0.0,
@@ -44,6 +48,7 @@ def insert_test_record(supabase):
     }
     response = supabase.table("weather_raw").insert(record).execute()
     print(response.data)
+    return(list(response))
     # Adding this line twice will give an error. Insert raises an error 
     # when the same row is added twice, because their can't be two identical 
     # pieces of information.
@@ -99,8 +104,8 @@ def safe_upsert(supabase, records):
 # the screen isn't loading fast enough, they shouldn't get charged twice. Indempotency ensures that error 
 # doesn't happen.
 
-get_client()
-# insert_test_record(supabase)
+supabase = get_client()
+records =  insert_test_record(supabase)
 get_records_by_date_range(supabase, "2022-10-4", "2023-10-4")
 record = {
         "date": "2026-08-30",
