@@ -7,8 +7,7 @@ arr = np.array([12.0, 15.0, np.nan, 14.0, 10.0, np.nan, 18.0, 14.0, 16.0, 22.0, 
 
 @task
 def create_series(arr):
-    return pd.Series(arr)
-
+    return pd.Series(arr, name="values")
 @task
 def clean_data(series):
     return series.dropna()
@@ -22,25 +21,29 @@ def summarize_data(series):
     return my_dict
 
 @flow
-def pipeline_flow():
+def pipeline_flow(arr):
     series = create_series(arr)
     clean = clean_data(series)
     my_dict = summarize_data(clean)
-    get_run_logger(f"Keys: {my_dict.keys()}")
-    get_run_logger(f"Values: {my_dict.values()}")
+    return my_dict
+
+arr = np.array([12.0, 15.0, np.nan, 14.0, 10.0, np.nan, 18.0, 14.0, 16.0, 22.0, np.nan, 13.0])
 
 if __name__ == "__main__":
-    pipeline_flow()
+    my_dict = pipeline_flow(arr)
+    print("Summary Dictionary")
+    for key, value in my_dict.items():
+        print(key, value)
 
 ## Question 1
 # Prefect might be too much overhead because of the simplicity 
 # of this pipeline. Prefect is intended for larger data sets 
-# and simplifying workflows. This workflow is already simply. 
+# and simplifying workflows. This workflow is already simple. 
 # It would be easier to have not added the decorators in the 
-# first place and just called pipeline_flow late in the code.
+# first place and just called pipeline_flow later in the code.
 
-## Question 1
+## Question 2
 # Prefect would be useful when working with a larger data sets, 
 # especially ones that may need more cleaning. It would be helpful 
-# in situation where more tasks are required even if the logic 
+# in situations where more tasks are required even if the logic 
 # stays simple.
