@@ -18,13 +18,16 @@ from supabase import create_client
 ## Connection Question 2 ##
 def get_client():
     load_dotenv()
-    try:
+    if os.getenv("SUPABASE_URL") == None:
+        print("Can't locate project URL")
+    elif os.getenv("SUPABASE_KEY"):
+        print("Can't locate project key")
+    else:
         supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
         response = supabase.table("connection_test").select("*").execute()
         print(response.data)
         return supabase
-    except Exception as e:
-        print("An error has occured:", e)
+
 
 ## Connection Question 3 ##
 # For this coure we disabled RLS so that we wouldn't have to deal with access policies or other 
@@ -51,7 +54,9 @@ def insert_test_record(supabase):
     return(list(response))
     # Adding this line twice will give an error. Insert raises an error 
     # when the same row is added twice, because their can't be two identical 
-    # pieces of information.
+    # pieces of information. Unlike with upsert which will update an existing 
+    # row. In this instance the existing row won't update, the error will come 
+    # from trying to create a new row with the same primary key.
 
 ## CRUD Question 2 ##
 def get_records_by_date_range(supabase, start, end):
@@ -59,13 +64,16 @@ def get_records_by_date_range(supabase, start, end):
         supabase.table("weather_raw").select("*").execute())
     rows = response.data
 
+    my_list = []
     for row in rows:
         if rows == None or rows == []:
             print("No rows in this time frame")
         elif row['date'] >= start and row['date']<=end:
             print(row)
+            my_list.append(row)
         else:
             continue
+    return my_list
 
 ## CRUD Question 3 ##
 # Both insert and upsert add data to a table. The issue with insert is that it will raise an error 

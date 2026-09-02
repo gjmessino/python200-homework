@@ -71,4 +71,4 @@ else:
         day = 5
         date = f"2023-07-0{day}"
         julyFourth = supabase.table("weather_raw").select("*").eq("date", date).execute()
-    print(f"Day closest to Jly 4th: {julyFourth}")
+    print(f"Day closest to July 4: {julyFourth}")
