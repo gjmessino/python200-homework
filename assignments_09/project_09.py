@@ -66,9 +66,12 @@ print(f"Latest Date: {response.data[-1]}")
 julyFourth = supabase.table("weather_raw").select("*").eq("date", "2023-07-04").execute()
 if len(julyFourth.data) > 0:
     print(f"July 4th Record: {julyFourth}")
-else: 
-    while(julyFourth.data)<=0:
-        day = 5
-        date = f"2023-07-0{day}"
-        julyFourth = supabase.table("weather_raw").select("*").eq("date", date).execute()
-    print(f"Day closest to July 4: {julyFourth}")
+# else: 
+#     while(julyFourth.data)<=0:
+#         day = 5
+#         date = f"2023-07-0{day}"
+#         julyFourth = supabase.table("weather_raw").select("*").eq("date", date).execute()
+#     print(f"Day closest to July 4: {julyFourth}")
+past = 
+future = 
+if int(past['date']) > int(future['date'])

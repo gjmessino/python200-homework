@@ -19,9 +19,9 @@ from supabase import create_client
 def get_client():
     load_dotenv()
     if os.getenv("SUPABASE_URL") == None:
-        print("Can't locate project URL")
-    elif os.getenv("SUPABASE_KEY"):
-        print("Can't locate project key")
+        raise ValueError ("Can't locate project URL")
+    elif os.getenv("SUPABASE_KEY") == None:
+        raise ValueError(("Can't locate project key"))
     else:
         supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
         response = supabase.table("connection_test").select("*").execute()
@@ -42,8 +42,9 @@ def get_client():
 
 ## CRUD Question 1 ##
 def insert_test_record(supabase):
+    today = str(date.today())
     record = {
-        "date": date.today(),
+        "date": today,
         "temperature_2m_max": 18.9,
         "temperature_2m_min": 14.4,
         "precipitation_sum":  0.0,
@@ -51,7 +52,7 @@ def insert_test_record(supabase):
     }
     response = supabase.table("weather_raw").insert(record).execute()
     print(response.data)
-    return(list(response))
+
     # Adding this line twice will give an error. Insert raises an error 
     # when the same row is added twice, because their can't be two identical 
     # pieces of information. Unlike with upsert which will update an existing 
@@ -61,19 +62,14 @@ def insert_test_record(supabase):
 ## CRUD Question 2 ##
 def get_records_by_date_range(supabase, start, end):
     response = (
-        supabase.table("weather_raw").select("*").execute())
-    rows = response.data
-
-    my_list = []
-    for row in rows:
-        if rows == None or rows == []:
-            print("No rows in this time frame")
-        elif row['date'] >= start and row['date']<=end:
-            print(row)
-            my_list.append(row)
-        else:
-            continue
-    return my_list
+        supabase
+        .table("weather_raw")
+        .select("*")
+        .gte("date", start)
+        .lte("date", end)
+        .execute()
+        )
+    return response.data
 
 ## CRUD Question 3 ##
 # Both insert and upsert add data to a table. The issue with insert is that it will raise an error 
@@ -113,13 +109,22 @@ def safe_upsert(supabase, records):
 # doesn't happen.
 
 supabase = get_client()
-records =  insert_test_record(supabase)
-get_records_by_date_range(supabase, "2022-10-4", "2023-10-4")
-record = {
+# insert_test_record(supabase)
+response = get_records_by_date_range(supabase, "2026-01-01", "2026-09-02")
+print(response)
+records = [{
         "date": "2026-08-30",
         "temperature_2m_max": 18,
         "temperature_2m_min": 14,
         "precipitation_sum":  0.0,
         "wind_speed_10m_max": 14,
-    }
-safe_upsert(supabase, record)
+    },
+    {
+        "date": "2026-03-30",
+        "temperature_2m_max": 10,
+        "temperature_2m_min": 11,
+        "precipitation_sum":  2.0,
+        "wind_speed_10m_max": 11,
+    },
+    ]
+safe_upsert(supabase, records)
