@@ -99,7 +99,6 @@ for label in cats:
     plt.boxplot([spam,ham], labels = ["Spam", "Not Spam"])
     plt.title(label)
     plt.ylabel('Frequency')
-    plt.legend()
     plt.savefig(f'assignment_03/outputs/{label}.png')
     plt.show()
 
@@ -113,7 +112,7 @@ for label in cats:
 x = df.drop('spam_label', axis=1)
 y = df['spam_label']
 x_train, x_test, y_train, y_test = train_test_split(
-    x, y, test_size=0.2, random_state = 42, stratify=y
+    x, y, test_size=0.1, random_state = 42, stratify=y
     )
 # stratify=y ensures both training and test sets maintain the same 
 # proportion of spam (1) vs. ham (0) as the original dataset.
@@ -179,21 +178,19 @@ for d in depth:
     test_pred = dtree.predict(x_test)
 
     print(f"Max Depth: {d}")
-    print(f"Train Accuracy Score(Decision Tree): {accuracy_score(y_train, train_pred)}")
+    print(f"Train Accuracy Score(Decision Tree depth = 5): {accuracy_score(y_train, train_pred)}")
     print(f"Test Accuracy Score(Decision Tree): {accuracy_score(y_test, test_pred)}")
 
-    print(f"Feature Importance: {dtree.feature_importances_}")
+    # As max_depth increases, training accuracy keeps climbing toward ~1.0 -- the tree is
+    # memorizing individual training examples -- while test accuracy plateaus and the
+    # train/test gap widens. That growing gap is the signature of overfitting. I'm picking 
+    # 5 as the best choice because we see it's accuracy is around 90% for both tests, but 
+    # it's not so high as to be overfitting.
 
-
-    # Accuracy increases with max depth because there 
-    # is more data to work with. I would pick none as 
-    # the max depth given that for both the test and 
-    # train data it had the highest accuracy.
-
-dtree = DecisionTreeClassifier(max_depth = None, random_state = 42)
+dtree = DecisionTreeClassifier(max_depth = 5, random_state = 42)
 dtree.fit(x_train, y_train)
 dtree_predict = dtree.predict(x_test)
-print(f"Scaled Accuracy Score(KNN): {accuracy_score(y_test, dtree_predict)}")
+print(f"Accuracy Score(Best Decision Tree): {accuracy_score(y_test, dtree_predict)}")
 print(f"Classification Report: {classification_report(y_test, dtree_predict)}")
 
 importance_df_tree = pd.DataFrame({
@@ -204,7 +201,7 @@ rf = RandomForestClassifier(n_estimators=100, random_state=42)
 rf.fit(x_train, y_train)
 rf_pred = rf.predict(x_test)
 print(f"Important Features: {rf.feature_importances_}")
-print(f"Accuracy Score (Random FOrest): {accuracy_score(y_test, rf_pred):.4f}")
+print(f"Accuracy Score (Random Forest): {accuracy_score(y_test, rf_pred):.4f}")
 print(f"Classification Report: {classification_report(y_test, rf_pred)}")
 
 importance_df_rf = pd.DataFrame({
@@ -214,45 +211,51 @@ importance_df_rf = pd.DataFrame({
 logreg_scale = LogisticRegression(C=1.0, max_iter=1000, solver='liblinear')
 logreg_scale.fit(x_train_scaled, y_train)
 logreg_scale_pred = logreg_scale.predict(x_test_scaled)
-print(f"Accuracy (Scaled): {accuracy_score(y_test, logreg_scale_pred):.4f}")
-print(f"Classification Report (Scaled): {classification_report(y_test, logreg_scale_pred)}")
+print(f"Accuracy (Scaled Logsitic Regression): {accuracy_score(y_test, logreg_scale_pred):.4f}")
+print(f"Classification Report (Scaled Logsitic Regression): {classification_report(y_test, logreg_scale_pred)}")
 
 logreg_pca = LogisticRegression(C=1.0, max_iter=1000, solver='liblinear')
 logreg_pca.fit(X_train_pca, y_train)
 logreg_pca_pred = logreg_pca.predict(X_test_pca)
 print(f"Accuracy (PCA): {accuracy_score(y_test, logreg_pca_pred):.4f}")
 print(f"Classification Report (PCA): {classification_report(y_test, logreg_pca_pred)}")
+
+print(f"Logistic Regression comparison -- Scaled: {accuracy_score(y_test, logreg_scale_pred):.4f} vs PCA-reduced: {accuracy_score(y_test, logreg_pca_pred):.4f}")
 # The scaled data had a marginally higher accuracy score (.9294 vs 0.9186 for PCA).
 
 # Unscaled KNN data had the lowest 
 # accuracy overall, problem because 
 # it was weighting certain data heavier 
 # than other. The Decision tree with a max 
-# iter of Non had an almost perfect 
-# accuracy score. Other testing fell in 
-# the middle with accuracy mostly in the 
-# low 90th percentile.
+# iter of None had an almost perfect 
+# accuracy score, but this was probably 
+# due to overfitting, so it theortically 
+# performed better on 5 or 10 iterations. 
+# Logistic regression on scaled data had 
+# the best non tree classification results.
+# Other testing fell in the middle with 
+# accuracy mostly in the low 90th percentile.
+
 
 top10_rf = importance_df_rf.nlargest(10, 'Importance')
 top10_tree = importance_df_tree.nlargest(10, 'Importance')
 
-fig, [ax1, ax2] = plt.subplots(1,2, figsize=(14, 6))
-ax1.bar(top10_rf['Feature'], top10_rf['Importance'])
-ax1.set_title('Important Features (Random Forest)')
-ax1.set_xlabel('Features')
+print("Top 10 Features (Decision Tree):")
+print(top10_tree.to_string(index=False))
 
-ax2.bar(top10_tree['Feature'], top10_tree['Importance'])
-ax2.set_title('Important Features (Decision Tree)')
-ax2.set_xlabel('Features')
+print("Top 10 Features (Random Forest):")
+print(top10_rf.to_string(index=False))
 
-plt.suptitle('Feature Important')
-plt.tight_layout()
+plt.figure()
+plt.bar(top10_rf['Feature'], top10_rf['Importance'])
+plt.title('Important Features (Random Forest)')
+plt.xlabel('Features')
 plt.savefig('assignment_03/outputs/feature_importances.png')
 plt.show()
 
 ConfusionMatrixDisplay.from_estimator(rf, x_test, y_test, display_labels=['Ham', 'Spam'])
 plt.title('Best Model Confusion Matrix (Random Forest)')
-plt.savefig('outputs/best_model_confusion_matrix.png')
+plt.savefig('assignment_03/outputs/best_model_confusion_matrix.png')
 plt.show()
 plt.close()
 
@@ -269,6 +272,14 @@ plt.close()
 # as spam) is far more costly to a user than a 
 # False Negative (letting a spam email slip 
 # into the inbox).
+
+# In the case of ham versus spam it is better to 
+# have false positives than false negatives. Users 
+# tend to prefer deleting spam that has slipped into 
+# their inbox, than miss important emails that accidently 
+# go to their spam folder. From the random forest confusion 
+# matrix we can see more spam ending up in ham than ham 
+# ending up in spam, which is the better outcome than the reverse.
 
 # --- Task 4: Cross-Validation --- #
 def get_cv(model, x, y, label):
@@ -300,7 +311,6 @@ get_cv(logreg_pca, X_train_pca, y_train, 'PCA Logistic Regression')
 # --- Task 5: Building a Prediction Pipeline --- #
 non_tree_pipeline = Pipeline([
     ("scaler", StandardScaler()),
-    ("pca", PCA(n_components=n)),  # 'n' calculated in Task 2
     ("classifier", LogisticRegression(C=1.0, max_iter=1000, solver='liblinear'))
 ])
 
@@ -316,7 +326,10 @@ tree_pred = tree_pipeline.predict(x_test)
 
 print(f"Classification Report (Tree): {classification_report(y_test, tree_pred)}")
 
-# The non-tree pipeline includes preprocessing steps (StandardScaler and PCA) 
+print(f"Pipeline test accuracy: {accuracy_score(y_test, non_tree_pred):.4f} (manual scaled LogReg was {accuracy_score(y_test, logreg_scale_pred):.4f})")
+print(f"Pipeline test accuracy: {accuracy_score(y_test, tree_pred):.4f} (manual Random Forest was {accuracy_score(y_test, rf_pred):.4f})")
+
+# The non-tree pipeline includes preprocessing steps (StandardScaler and Logistic regression) 
 # because distance- and gradient-based algorithms (like Logistic Regression and KNN) 
 # are sensitive to differing feature scales and high dimensionality. The tree pipeline 
 # contains only the classifier because Decision Trees and Random Forests split features 

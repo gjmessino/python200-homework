@@ -84,10 +84,10 @@ for k in k_values:
     knn = KNeighborsClassifier(n_neighbors=k)
     scores = cross_val_score(knn, x_train, y_train, cv=5)
     print(f"K: {k}")
-    print(f"CV: {scores}")
-# The best k value is 15 becuase it 
-# consistantly had the highest accuracy 
-# rate, and the fewest overfits.
+    print(f"CV: {scores.mean()}")
+# The best k value is 5 and 7 given 
+# they both have a CV mean of .975, 
+# when k is lower or higher that number dips.
 
 # --- Classifier Evaluation Question 1 --- #
 cm = confusion_matrix(y_test, knn_predict)
@@ -120,18 +120,16 @@ print(f"Classicifation Report: {classification_report(y_test, y_pred)}")
 c_vals = [0.01, 1, 100]
 for c in c_vals:
     model = LogisticRegression(
-        max_iter = 1000,
-        solver = 'liblinear',
-        C = c
-        )
+        max_iter=1000,
+        solver='liblinear',
+        C=c
+    )
     ovr_model = OneVsRestClassifier(estimator=model)
     ovr_model.fit(x_train_scaled, y_train)
-    print(ovr_model.estimators_)
+
+    total_coef = sum(np.abs(est.coef_).sum() for est in ovr_model.estimators_)
     print(f"C Value: {c}")
-    total = 0
-    for est in ovr_model.estimators_:
-        total += np.abs(est.coef_).sum()
-    print(f"Total Coefficient: {total}")
+    print(f"Total Coefficient Magnitude: {total_coef:.4f}")
 
 # --- PCA --- #
 digits = load_digits()
@@ -197,21 +195,22 @@ def reconstruct_digit(sample_idx, scores, pca, n_components):
     return reconstruction.reshape(8, 8)
 
 n_list = [2, 5, 15, 40]
-reconstruction = reconstruct_digit(X_digits[:4], scores, pca, n)
 
 fig, axes = plt.subplots(5,5, figsize=(10,10))
 
 for i in range(5):
     ax = axes[0,i]
     ax.imshow(images[i], cmap='gray_r')
-    ax.set_title(f'Image {i}')
+    ax.set_title(f'Image {i +1} (Original)')
 
 for row, n in enumerate(n_list, start=1):
+    i = 1
     for col in range(5):
         reconstructed_img = reconstruct_digit(col, scores, pca, n)
         ax = axes[row, col]
         ax.imshow(reconstructed_img, cmap='gray_r')
-        ax.set_title(f"n = {n}")
+        ax.set_title(f"Image {i} (n = {n})")
+        i+=1
 
 plt.suptitle('PCA Reconstruction')
 plt.tight_layout()

@@ -30,7 +30,10 @@ print(f"New Shape: {y.shape}")
 # In the case of a single array, reshaping it 
 # tells scikit learn that with this data there 
 # is only 1 column of information, because 
-# scikit learn needs rows and columns to work.
+# scikit learn needs rows and columns to work. 
+# Arrays are only single dimensional opbject 
+# and therefore don't automatically have the 
+# second variable that scikit is looking for.
 
 ## scikit-learn Question 3
 X_clusters, _ = make_blobs(n_samples=120, centers=3, cluster_std=0.8, random_state=7)
@@ -40,14 +43,15 @@ kmeans.fit(X_clusters)
 centers = kmeans.cluster_centers_
 labels = kmeans.predict(X_clusters)
 
-plt.scatter(X_clusters[:,0], X_clusters[:,1], c=kmeans.labels_, cmap='viridis', s=60, alpha=0.7)
+plt.scatter(X_clusters[:,0], X_clusters[:,1], c=labels, cmap='viridis', s=60, alpha=0.7)
 plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, marker='X', label='Centers')
 plt.title('Data Clusters')
 plt.xlabel('X')
 plt.ylabel('Y')
+plt.legend()
 
 plt.tight_layout()
-plt.savefig('assignment_02/outputs/kmeans_clusters.png')
+plt.savefig('outputs/kmeans_clusters.png')
 plt.show()
 
 print(f"Centers: {kmeans.cluster_centers_}")
@@ -66,7 +70,7 @@ plt.scatter(age,cost, c=smoker,cmap="coolwarm")
 plt.title('Medical Cost vs Age')
 plt.xlabel('Age')
 plt.ylabel('Medical Cost')
-plt.savefig('assignment_02/outputs/cost_vs_age.png')
+plt.savefig('outputs/cost_vs_age.png')
 plt.show()
 
 # People who smoke consistantly have 
@@ -80,19 +84,18 @@ age_train, age_test, cost_train, cost_test = train_test_split(
 print(f"Age Training Shape:{age_train.shape} ")
 print(f"Age Testing Shape:{age_test.shape} ")
 print(f"Cost Training Shape:{cost_train.shape} ")
-print(f"Cost Training Shape:{cost_test.shape} ")
+print(f"Cost Testing Shape:{cost_test.shape} ")
 
 ## Linear Regression Question 3
 model = LinearRegression()
 model.fit(age_train, cost_train)
 
-print(f"Slope: {model.coef_[0]}")
-print(f"Intercept: {model.intercept_}")
-
 cost_predict = model.predict(age_test)
-rmse = np.sqrt(mean_squared_error(cost_predict, cost_test))
+rmse = np.sqrt(np.mean((cost_predict - cost_test) ** 2))
 r2 = model.score(age_test, cost_test)
 
+print(f"Slope: {model.coef_[0]}")
+print(f"Intercept: {model.intercept_}")
 print(f"Root Mean Squared Error: {rmse}")
 print(f"R Squared: {r2}")
 
@@ -110,7 +113,8 @@ X_train, X_test, y_train, y_test = train_test_split(
 model_full = LinearRegression()
 model_full.fit(X_train, y_train)
 r2 = model_full.score(X_test, y_test)
-y_pred = model.predict(X_test)
+print(X_test)
+y_pred = model_full.predict(X_test)
 
 print(f"R Squared: {r2}")
 print("age coefficient:    ", model_full.coef_[0])
@@ -118,13 +122,16 @@ print("smoker coefficient: ", model_full.coef_[1])
 
 # R2 for question 4 is higher, indicating 
 # the full model is doing a much better 
-# job predicting costs. The smoker coefficient...
+# job predicting costs. The smoker 
+# coefficient is exceedingly higher than 
+# age coefficient meaning it has a larger impact.
 
 ## Linear Regression Question 5
 plt.figure(3)
-plt.scatter(X_train, y_train, color = 'blue', label='Actual')
-plt.plot(X_train, y_pred, color = 'red', label='Predicted')
-plt.xlabel('Age')
-plt.ylabel('Cost')
-plt.legend(labels)
+plt.scatter(y_test, y_pred, color='blue', label='Predicted vs Actual')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='red', label='Perfect Prediction')
+plt.xlabel('Actual Cost')
+plt.ylabel('Predicted Cost')
+plt.legend()
+plt.savefig('outputs/predicted_vs_actual_cost.png')
 plt.show()
