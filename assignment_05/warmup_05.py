@@ -142,7 +142,7 @@ reviews = [
     "Great price, but the documentation is nearly impossible to follow."
 ]
 
-zero_prompt = f'Look at three reviews and classify the sentiment of each as positive, negative or mixed. Make sure to number your responses. Here are the reviews:'
+zero_prompt = 'Look at three reviews and classify the sentiment of each as positive, negative or mixed. Make sure to number your responses. Here are the reviews:'
 i=0
 for rev in reviews:
     zero_prompt+= f"\nReview {i}: {rev}"
@@ -151,8 +151,13 @@ results = get_completion(zero_prompt)
 print(f"Zero Shot: {results}")
 
 ## Prompt Question 2 — One-Shot ##
-example = f'Review: "Fast shipping but the item arrived damaged." Sentiment: mixed'
-one_prompt = zero_prompt + "use the example to help. Example: " + example
+one_prompt = 'Look at three reviews and classify the sentiment of each as positive, negative or mixed. Make sure to number your responses. Here are the reviews:'
+i=0
+for rev in reviews:
+    one_prompt+= f"\nReview {i}: {rev}"
+    i+=1
+example = 'Review: "Fast shipping but the item arrived damaged." Sentiment: mixed'
+one_prompt += f"Use this example to help: {example}"
 results = get_completion(one_prompt + example)
 print(f"One Shot: {results}")
 
@@ -167,8 +172,16 @@ examples = """Review: The service was outstanding! Sentiment: Positive,
             Review: Great app, but crashes often. Sentiment: Mixed,
             Review: Total waste of money. Sentiment: Negative"""
 
-multi_prompt = zero_prompt + "use these three example to help. Examples: " + examples
-results = get_completion(multi_prompt + examples)
+multi_prompt = 'Look at three reviews and classify the sentiment of each as positive, negative or mixed. Make sure to number your responses. Here are the reviews:'
+i=0
+for rev in reviews:
+    multi_prompt+= f"\nReview {i}: {rev}"
+    i+=1
+multi_prompt += "Use these examples to help: "
+i = 0
+for ex in examples:
+    multi_prompt += f"Example: {ex}"
+results = get_completion(multi_prompt)
 print(f"Few Shot: {results}")
 
 # For this example both one-shot and few-shot 
