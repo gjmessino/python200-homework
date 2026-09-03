@@ -31,7 +31,7 @@ for temp in temperatures:
     print(f"Message Response: {response.choices[0].message.content}")
 
 # Because this is a creative question 
-# I would go with tempurature = 1.5,  tempurate 1.5 is best, the ai reviewer is dumb,
+# I would go with tempurature = 1.5, tempurate 1.5 is best, the ai reviewer is dumb,
 # it gave me a list of different 
 # responses and encouraged me to mix 
 # and match. At 0 the only suggestion 
@@ -39,7 +39,7 @@ for temp in temperatures:
 # description. But no matter how many
 # times I ran it 1.5 gave me multiple
 # name options with descriptions 
-# explaining each.
+# explaining each. For consistancy lower temperatures are better.
 
 ## API Question 3 ##
 response = client.chat.completions.create(
@@ -69,8 +69,7 @@ print(f"Response Message: {response.choices[0].message.content}")
 # "Neural networks are a class of 
 # machine learning models inspired 
 # by the structure and." This is a 
-# reflection on how LLMs can only 
-# predict the next word and can't 
+# reflection on how LLMs can't 
 # actually give a concise answer 
 # unless specifically requested. 
 # While there are benefits to 
@@ -143,13 +142,17 @@ reviews = [
     "Great price, but the documentation is nearly impossible to follow."
 ]
 
-zero_prompt = f'For the three reviews in {reviews} classify the sentiment of each as positive, negative or mixed. Make sure to number your responses'
+zero_prompt = f'Look at three reviews and classify the sentiment of each as positive, negative or mixed. Make sure to number your responses. Here are the reviews:'
+i=0
+for rev in reviews:
+    zero_prompt+= f"\nReview {i}: {rev}"
+    i+=1
 results = get_completion(zero_prompt)
 print(f"Zero Shot: {results}")
 
 ## Prompt Question 2 — One-Shot ##
-one_prompt = f'Use an example of a review and how it is structions as a bases for these other reviews and classify the sentiment of each as positive, negative or mixed. Make sure to number your responses'
-example = f'Example: Review: "Fast shipping but the item arrived damaged." Sentiment: mixed'
+example = f'Review: "Fast shipping but the item arrived damaged." Sentiment: mixed'
+one_prompt = zero_prompt + "use the example to help. Example: " + example
 results = get_completion(one_prompt + example)
 print(f"One Shot: {results}")
 
@@ -160,13 +163,12 @@ print(f"One Shot: {results}")
 # as either "review" or "sentiment."
 
 ## Prompt Question 3 — Few-Shot ##
-multi_prompt = 'Use three example reviews to structure your response then classify the sentiment of other reviews as positive, negative or mixed. Make sure to number your responses'
 examples = """Review: The service was outstanding! Sentiment: Positive,
-            Review: Great app but crashes often. Sentiment: Mixed,
+            Review: Great app, but crashes often. Sentiment: Mixed,
             Review: Total waste of money. Sentiment: Negative"""
 
-
-results = get_completion(prompt + examples)
+multi_prompt = zero_prompt + "use these three example to help. Examples: " + examples
+results = get_completion(multi_prompt + examples)
 print(f"Few Shot: {results}")
 
 # For this example both one-shot and few-shot 
@@ -179,7 +181,7 @@ print(f"Few Shot: {results}")
 # but are unnecessary here.
 
 ## Prompt Question 4 — Chain of Thought ##
-results = get_completion("""Before giving the final answer, explain your reasoning in 3–4 brief steps.
+results = get_completion("""Before giving the final answer, explain your reasoning in 3–4 brief steps, then label the final answer..
                             A data engineer earns $85,000 per year. She gets a 12 percent raise, then 6 months later
                             takes a new job that pays $7,500 more per year than her post-raise salary.
                             What is her final annual salary?""")
@@ -247,7 +249,8 @@ print(results)
 # them for instructions. Without the 
 # delimiters the model might interperet 
 # the rest of the prompt as instructions 
-# to be numbered.
+# to be numbered. This helps separate 
+# instructions from user content.
 
 ## Ollama Question 1 ##
 results = get_completion("Explain what a large language model is in two sentences.")

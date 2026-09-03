@@ -56,7 +56,8 @@ def rewrite_bullets(bullets: list[str]) -> list[dict]:
         return(response)
     except json.JSONDecodeError:
         print("Error: response was not valid JSON")
-
+    return {}
+    
 bullets = [
     "Helped customers with their problems",
     "Made reports for the management team",
@@ -181,6 +182,8 @@ def run_chatbot():
                     raw_bullets.append(line)
             # YOUR CODE: call rewrite_bullets() and print the results
             messages.append({"role": "user", "content": user_input})
+            messages.append({"role": "user", "content": raw_bullets})
+
             new_lines = rewrite_bullets(raw_bullets)
             for item in new_lines:
                 print(f"Original: {item['original']} vs. Improved: {item['improved']}")
@@ -193,6 +196,8 @@ def run_chatbot():
             background = input("Job Application Helper: Briefly describe your background: ").strip()
             # YOUR CODE: call generate_cover_letter() and print the result
             messages.append({"role": "user", "content": user_input})
+            cover_input = f"Job Title: {job_title} \nBackground: {background}"
+            messages.append({"role": "user", "content": cover_input})
             cover = generate_cover_letter(job_title, background)
             print(f"New Cover Letter: {cover}")
             messages.append({"role": "assistant", "content": cover})
