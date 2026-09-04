@@ -1,0 +1,23 @@
+{
+  "python_version": "3.11.4 (v3.11.4:d2340ef257, Jun  6 2023, 19:15:51) [Clang 13.0.0 (clang-1300.0.29.30)]",
+  "sklearn_version": "1.9.0",
+  "features": [
+    "temperature_2m_max",
+    "temperature_2m_min",
+    "precipitation_sum",
+    "wind_speed_10m_max"
+  ],
+  "best_params": {
+    "clf__C": 5
+  },
+  "test_auc": 0.913,
+  "city": "San Francisco, CA",
+  "latitude": 37.7749,
+  "longitude": -122.4194,
+  "label_thresholds": {
+    "temperature_2m_max": "7\u201326\u00b0C",
+    "temperature_2m_min": ">= 0\u00b0C",
+    "precipitation_sum": "< 3.0 mm",
+    "wind_speed_10m_max": "< 30 km/h"
+  }
+}
