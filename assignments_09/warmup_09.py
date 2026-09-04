@@ -109,7 +109,7 @@ def safe_upsert(supabase, records):
 # doesn't happen.
 
 supabase = get_client()
-# insert_test_record(supabase)
+insert_test_record(supabase)
 response = get_records_by_date_range(supabase, "2026-01-01", "2026-09-02")
 print(response)
 records = [{

@@ -1,7 +1,9 @@
 import os
+import datetime
 from dotenv import load_dotenv
 import requests
 from supabase import create_client
+import datetime
 
 ## Step 1: Extract ##
 url = "https://archive-api.open-meteo.com/v1/archive"
@@ -66,12 +68,25 @@ print(f"Latest Date: {response.data[-1]}")
 julyFourth = supabase.table("weather_raw").select("*").eq("date", "2023-07-04").execute()
 if len(julyFourth.data) > 0:
     print(f"July 4th Record: {julyFourth}")
-# else: 
-#     while(julyFourth.data)<=0:
-#         day = 5
-#         date = f"2023-07-0{day}"
-#         julyFourth = supabase.table("weather_raw").select("*").eq("date", date).execute()
-#     print(f"Day closest to July 4: {julyFourth}")
-past = 
-future = 
-if int(past['date']) > int(future['date'])
+
+else:
+    past = (supabase
+            .table('weather_raw')
+            .select('*')
+            .lte('date', julyFourth)
+            .order("date_column", desc=True)
+            .limit(1)
+            .execute())
+    future = (supabase
+            .table('weather_raw')
+            .select('*')
+            .gte('date', julyFourth)
+            .order("date_column", desc=False)
+            .limit(1)
+            .execute())
+    past_dif = abs(past-julyFourth)
+    fut_dif = abs(future-julyFourth)
+    if past_dif > fut_dif:
+        print(f"Nearest Date: {past}")
+    else:
+        print(f"Nearest Date: {future}")
