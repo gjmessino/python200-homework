@@ -58,10 +58,15 @@ def call_with_retry(client, messages, max_retries=3):
                 model="gpt-4o-mini",
                 messages = messages,
             )
+            return response
         except Exception as e:
             print("An error has occured:", e)
         max_retries -= 1
         time.sleep(2)
     return None
 
-## ADD COMMENT
+# This could be used with API calls on large data sets. API called can fail for many reasons besides the code 
+# (wifi issues, problems with the model company OpenAI, etc.). Allowing for a wait then retry ensures that proper 
+# responses are given as long as there are no issues with the code itself. This is especially helpful with large 
+# datasets given that they may take a long time to run, and it is unfeasible for a programmer to watch for every 
+# possible error.

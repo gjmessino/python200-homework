@@ -66,29 +66,33 @@ def make_user_message(row, good_for_running, confidence):
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 for i, record in enumerate(enrichment_records):
-    raw_row = next(r for r in to_classify if r["date"] == record["date"])
+    try:
+        raw_row = next(r for r in to_classify if r["date"] == record["date"])
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": make_user_message(
-                    raw_row,
-                    record["good_for_running"],
-                    record["confidence"],
-                ),
-            },
-        ],
-        max_tokens=100,
-    )
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": make_user_message(
+                        raw_row,
+                        record["good_for_running"],
+                        record["confidence"],
+                    ),
+                },
+            ],
+            max_tokens=100,
+        )
 
-    summary = response.choices[0].message.content.strip()
-    record["llm_summary"] = summary
+        summary = response.choices[0].message.content.strip()
+        record["llm_summary"] = summary
+    except:
+        print('An error has occured')
+        continue
 
     if (i + 1) % 50 == 0:
-        print(f"  Enriched {i + 1} / {len(enrichment_records)} records...")
+        print(f"LLM Enriched {i + 1} / {len(enrichment_records)} records...")
 
 ## Step 4: Load ##
 response = (
@@ -103,7 +107,11 @@ response = supabase.table("weather_enriched").select("*").execute()
 print(f"Total Number of Rows: {len(response.data)}")
 print(f"Sample Rows...")
 sample = supabase.table("weather_enriched").select("*").limit(5).execute()
-print(sample)
+for sam in sample:
+    print(f"Date: {sam['date']}")
+    print(f"Good for Running: {sam['good_for_running']}")
+    print(f"Confidence: {sam['confidence']}")
+    print(f"LLM Response: {sam['llm_response']}")
 
 ## Step 6: Reflect ##
 # 1. In this hypothetical, if the model is trained to have the same ratings for good running days (ex same max/min 
