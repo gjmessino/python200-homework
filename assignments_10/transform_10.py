@@ -11,12 +11,15 @@ load_dotenv()
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 response = supabase.table("weather_raw").select("*").execute()
 raw_rows = response.data
-print(f"Fetched {len(raw_rows)} rows from weather_raw")
 
 enriched_response = supabase.table("weather_enriched").select("date").execute()
 already_done = {row["date"] for row in enriched_response.data}
 to_classify = [row for row in raw_rows if row["date"] not in already_done]
-print(f"Records to classify: {len(to_classify)} (skipping {len(already_done)} already enriched)")
+
+print(f"Number or Rows in Raw Weather: {len(raw_rows)}")
+print(f"Number or Rows Enriched: {len(to_classify)}")
+print(f"Number of Rows to be Processed: {len(already_done)}")
+
 
 ## Step 2: ML Transform ##
 with open("models/weather_classifier_metadata.json") as f:
@@ -87,9 +90,8 @@ for i, record in enumerate(enrichment_records):
 
         summary = response.choices[0].message.content.strip()
         record["llm_summary"] = summary
-    except:
-        print('An error has occured')
-        continue
+    except Exception as e:
+        record["llm_summary"] = f"An error has occured: {e}"
 
     if (i + 1) % 50 == 0:
         print(f"LLM Enriched {i + 1} / {len(enrichment_records)} records...")
@@ -107,11 +109,11 @@ response = supabase.table("weather_enriched").select("*").execute()
 print(f"Total Number of Rows: {len(response.data)}")
 print(f"Sample Rows...")
 sample = supabase.table("weather_enriched").select("*").limit(5).execute()
-for sam in sample:
+for sam in sample.data:
     print(f"Date: {sam['date']}")
     print(f"Good for Running: {sam['good_for_running']}")
     print(f"Confidence: {sam['confidence']}")
-    print(f"LLM Response: {sam['llm_response']}")
+    print(f"LLM Response: {sam['llm_summary']}")
 
 ## Step 6: Reflect ##
 # 1. In this hypothetical, if the model is trained to have the same ratings for good running days (ex same max/min 

@@ -47,7 +47,9 @@ SYSTEM_PROMPT = (
 
 # To alter the prompt from the lesson I first changed the beginning to specify for two sentences. Then I changed the 
 # wording of how the first sentence (original sentence prompt) should be phrased so it's clear it's the first half. 
-# I added another time describing the second sentence and what it should do.
+# I added another time describing the second sentence and what it should do. These changes help with validation logic 
+# given that the checker needs to accept two sentence boundaries instead of one and verify both sentence count and 
+# ordering of them.
 
 ## Prompt Question 2 ##
 import time
