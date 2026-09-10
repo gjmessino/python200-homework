@@ -182,7 +182,7 @@ def run_chatbot():
                     raw_bullets.append(line)
             # YOUR CODE: call rewrite_bullets() and print the results
             messages.append({"role": "user", "content": user_input})
-            messages.append({"role": "user", "content": raw_bullets})
+            messages.append({"role": "user", "content": "\n".join(raw_bullets)})
 
             new_lines = rewrite_bullets(raw_bullets)
             for item in new_lines:
