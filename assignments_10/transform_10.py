@@ -107,6 +107,7 @@ print(f"Upserted {len(response.data)} rows into weather_enriched")
 ## Step 5: Verify ##
 response = supabase.table("weather_enriched").select("*").execute()
 print(f"Total Number of Rows: {len(response.data)}")
+print(f"Good for Running Count: {len(response.data['good_for_running'])}")
 print(f"Sample Rows...")
 sample = supabase.table("weather_enriched").select("*").limit(5).execute()
 for sam in sample.data:
