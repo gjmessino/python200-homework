@@ -20,15 +20,15 @@ print(f"Number or Rows in Raw Weather: {len(raw_rows)}")
 print(f"Number or Rows Enriched: {len(already_done)}")
 print(f"Number of Rows to be Processed: {len(to_classify)}")
 
-
 ## Step 2: ML Transform ##
-with open("models/weather_classifier_metadata.json") as f:
+with open("../models/weather_classifier_metadata.json") as f:
     metadata = json.load(f)
 FEATURES = metadata["features"]
+
 df = pd.DataFrame(to_classify)
 X = df[FEATURES]
 
-clf = joblib.load("models/weather_classifier.pkl")
+clf = joblib.load("../models/weather_classifier.pkl")
 predictions  = clf.predict(X)
 probabilities = clf.predict_proba(X)[:, 1]
 
@@ -106,8 +106,14 @@ print(f"Upserted {len(response.data)} rows into weather_enriched")
 
 ## Step 5: Verify ##
 response = supabase.table("weather_enriched").select("*").execute()
+good_count = (supabase
+              .table("weather_enriched")
+              .select("*", count="exact")
+              .eq("good_for_running", True)
+              .execute()
+)
 print(f"Total Number of Rows: {len(response.data)}")
-print(f"Good for Running Count: {len(response.data['good_for_running'])}")
+print(f"Good for Running Count: {good_count.count}")
 print(f"Sample Rows...")
 sample = supabase.table("weather_enriched").select("*").limit(5).execute()
 for sam in sample.data:
@@ -131,3 +137,6 @@ for sam in sample.data:
 # This takes far longer than simply printing the predictions as classified by the ML. To fix this we could only do LLM 
 # calls on dates requested by a user, so instead of getting a written response for every new row, we'd only make the 
 # LLM response if necessary. 
+
+# ----- Video Link ----- #
+# https://canva.link/ej1s7st852tmgqg
