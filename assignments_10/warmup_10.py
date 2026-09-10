@@ -40,7 +40,7 @@ SYSTEM_PROMPT = (
     "You are writing a two-sentence running recommendation for a daily weather summary app. "
     "You will receive weather conditions for a single day and a machine learning prediction "
     "about whether the day is good for running. "
-    "Write the first sentence — direct, practical, and specific to the conditions. "
+    "Write the first sentence — statement of the prediction, direct, practical, and specific to the conditions. "
     "Write the second sentence - a descriptive explanation of the reasoning behind the prediction"
     "Do not use bullet points, headers, or phrases like 'Based on the data'."
 )

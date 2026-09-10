@@ -17,8 +17,8 @@ already_done = {row["date"] for row in enriched_response.data}
 to_classify = [row for row in raw_rows if row["date"] not in already_done]
 
 print(f"Number or Rows in Raw Weather: {len(raw_rows)}")
-print(f"Number or Rows Enriched: {len(to_classify)}")
-print(f"Number of Rows to be Processed: {len(already_done)}")
+print(f"Number or Rows Enriched: {len(already_done)}")
+print(f"Number of Rows to be Processed: {len(to_classify)}")
 
 
 ## Step 2: ML Transform ##
