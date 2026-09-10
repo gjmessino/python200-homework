@@ -73,19 +73,22 @@ else:
     past = (supabase
             .table('weather_raw')
             .select('*')
-            .lte('date', julyFourth)
-            .order("date_column", desc=True)
+            .lte('date', "2023-07-04")
+            .order("date", desc=True)
             .limit(1)
             .execute())
     future = (supabase
             .table('weather_raw')
             .select('*')
-            .gte('date', julyFourth)
-            .order("date_column", desc=False)
+            .gte('date', "2023-07-04")
+            .order("date", desc=False)
             .limit(1)
             .execute())
-    past_dif = abs(past-julyFourth)
-    fut_dif = abs(future-julyFourth)
+    paststr = datetime.datetime.strptime(past.data[0]['date'], "%Y-%m-%d")
+    futstr = datetime.datetime.strptime(future.data[0]['date'], "%Y-%m-%d")
+    fourth = datetime.datetime.strptime("2023-07-04", "%Y-%m-%d")
+    past_dif = abs(paststr-fourth)
+    fut_dif = abs(futstr-fourth)
     if past_dif > fut_dif:
         print(f"Nearest Date: {past}")
     else:

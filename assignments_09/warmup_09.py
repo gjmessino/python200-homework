@@ -24,8 +24,6 @@ def get_client():
         raise ValueError(("Can't locate project key"))
     else:
         supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-        response = supabase.table("connection_test").select("*").execute()
-        print(response.data)
         return supabase
 
 
@@ -94,7 +92,7 @@ def safe_upsert(supabase, records):
         .upsert(records, on_conflict = "date", count="exact")
         .execute()
     )
-    print(f"Rows Affected: {response.count}")
+    print(f"Number of Rows Affected: {response.count}")
 
 # ----- Idempotency ----- #
 
