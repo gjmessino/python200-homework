@@ -104,3 +104,19 @@ print(f"Total Number of Rows: {len(response.data)}")
 print(f"Sample Rows...")
 sample = supabase.table("weather_enriched").select("*").limit(5).execute()
 print(sample)
+
+## Step 6: Reflect ##
+# 1. In this hypothetical, if the model is trained to have the same ratings for good running days (ex same max/min 
+# tempuratures), then the location change wouldn't matter. If the standards for a good running day are the same 
+# everywhere then predicting conditions in one location won't change anything. However, the week 4 assignment allowed 
+# us to adjust our standards for what makes a good running day if we change locations (ex. here is SF people are okay 
+# with running on hotter days because it is rarely warm here). If the code changes the standard for good_for_running 
+# based on location then we would end up with incorrect predictions based on location. 
+
+# 2. It is the LLMs job to interpret the data from the ML into understandable language. Because it is not outputing 
+# the exact data to the user it's possible for its interpretation to skew how the data is presented. 
+
+# 3. Latency would be one of the largest concern given that there is a call to the LLM every time a record is processed. 
+# This takes far longer than simply printing the predictions as classified by the ML. To fix this we could only do LLM 
+# calls on dates requested by a user, so instead of getting a written response for every new row, we'd only make the 
+# LLM response if necessary. 
