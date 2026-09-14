@@ -35,9 +35,7 @@ from prefect import task, flow, get_run_logger
 ## Production Question 3 ##
 @task
 def get_info(enrichment_records: list) -> None:
-    logger = get_run_logger()
-    message = f"Number of Enrichment Records Upserted: {len(enrichment_records)}"
-    logger.INFO(message)
+    get_run_logger().info(f"Number of Enrichment Records Upserted: {len(enrichment_records)}")
 
 ## Production Question 4 ##
 # An incremental check won't reprocess records that have already been processed. In my answer about upsert for Production
