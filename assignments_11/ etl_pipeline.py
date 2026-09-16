@@ -157,3 +157,6 @@ def etl_pipeline():
 
 if __name__ == "__main__":
     etl_pipeline()
+
+## ----- Video Link ----- ##
+# https://canva.link/ne3hlr564eyhrkb
