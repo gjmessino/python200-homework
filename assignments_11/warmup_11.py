@@ -9,6 +9,7 @@
 ## Prefect Question 2 ##
 from prefect import task, flow, get_run_logger
 @task(retries= 3,retry_delay_seconds=30)
+def call_api():
 
 ## Prefect Question 3 ##
 # From the Prefect UI you can click on the pipeline you desire on the side panel labeled "Flow", which will show if 

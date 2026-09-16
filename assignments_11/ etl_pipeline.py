@@ -57,7 +57,7 @@ def load_raw(records: list) -> None:
                 .upsert(records, on_conflict="date", count="exact")
                 .execute()
                 )
-    print(response.count)
+    print(f"Rows Upserted: {response.count}")
 
 ## ----- transform task ----- ##
 @task
