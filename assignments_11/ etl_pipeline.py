@@ -75,7 +75,7 @@ def transform(raw_records: list) -> list:
         return []
 
     # --- ML classify ---
-    clf = joblib.load("models/weather_classifier.pkl")
+    clf = joblib.load("../models/weather_classifier.pkl")
     df = pd.DataFrame(to_process)
     X = df[FEATURES]
 
@@ -106,6 +106,13 @@ def transform(raw_records: list) -> list:
             f"Model prediction: {prediction_text} (confidence: {record['confidence']:.0%})"
         )
         try:
+            SYSTEM_PROMPT = (
+                "You are writing a one-sentence running recommendation for a daily weather summary app. "
+                "You will receive weather conditions for a single day and a machine learning prediction "
+                "about whether the day is good for running. "
+                "Write exactly one sentence — direct, practical, and specific to the conditions. "
+                "Do not use bullet points, headers, or phrases like 'Based on the data'."
+                )
             response = openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
