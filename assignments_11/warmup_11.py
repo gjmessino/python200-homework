@@ -7,7 +7,6 @@
 # I would only use @flow if the temperature conversion was part of a larger set of tasks to complete in order.
 
 ## Prefect Question 2 ##
-from prefect import task, flow, get_run_logger
 @task(retries= 3,retry_delay_seconds=30)
 def call_api():
 

@@ -141,10 +141,10 @@ def load_enriched(enrichment_records: list) -> None:
 
     response = (
         supabase.table("weather_enriched")
-        .upsert(enrichment_records, on_conflict="date")
+        .upsert(enrichment_records, on_conflict="date", count="exact")
         .execute()
     )
-    print(f"Upserted {len(response.data)} rows into weather_enriched")
+    print(f"Upserted {response.count} rows into weather_enriched")
 
 ## ----- Flow ----- ##
 @flow(log_prints=True)
